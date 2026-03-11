@@ -17,6 +17,7 @@ export default function SnsPage() {
   const [replyQueue, setReplyQueue] = useState<any[]>([])
   const [triggerForm, setTriggerForm] = useState({ platform: 'instagram', trigger_type: 'comment', keywords: '', reply_template: '', url_type: 'product_lp', destination_url: '' })
   const [jobForm, setJobForm] = useState({ platform: 'instagram', job_type: 'like', target_type: 'hashtag', target_value: '', daily_limit: 100 })
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     fetchTriggers(); fetchJobs(); fetchReplyQueue()
@@ -38,12 +39,31 @@ export default function SnsPage() {
   async function generatePost() {
     if (!postForm.topic) { toast.error('トピックを入力してください'); return }
     setGenerating(true)
-    const r = await fetch('/api/agents', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'generate_post', params: { ...postForm, targetAudience: '30代女性' } }) })
-    const data = await r.json()
-    if (r.ok) { setGeneratedPost(data.result); toast.success(`生成完了 (${data.points_used}pt使用)`) }
-    else toast.error(data.error)
+    setGeneratedPost(null)
+    try {
+      const r = await fetch('/api/agents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generate_post', params: { ...postForm, targetAudience: '30代女性' } })
+      })
+      const data = await r.json()
+      if (r.ok) {
+        setGeneratedPost(data.result)
+        toast.success(`✅ 生成完了！(${data.points_used}pt使用)`)
+      } else {
+        toast.error(data.error || 'エラーが発生しました')
+      }
+    } catch (e) {
+      toast.error('通信エラーが発生しました')
+    }
     setGenerating(false)
+  }
+
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    toast.success('コピーしました！')
+    setTimeout(() => setCopied(false), 2000)
   }
 
   async function saveTrigger() {
@@ -66,16 +86,15 @@ export default function SnsPage() {
   }
 
   async function approveReply(id: string) {
-    // PATCH reply queue status
     const r = await fetch('/api/sns/webhook', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status: 'approved' }) })
     if (r.ok) { toast.success('返答を承認しました'); fetchReplyQueue() }
   }
 
-  const tabs: { id: Tab; label: string; color: string }[] = [
-    { id: 'posts',    label: '投稿生成',          color: 'cyan' },
-    { id: 'likes',    label: '自動いいね・フォロー', color: 'green' },
-    { id: 'triggers', label: 'キーワード返信',      color: 'amber' },
-    { id: 'ai_reply', label: 'AI自動返答',         color: 'purple' },
+  const tabs: { id: Tab; label: string; icon: string }[] = [
+    { id: 'posts',    label: '投稿生成',           icon: '✦' },
+    { id: 'likes',    label: '自動いいね・フォロー', icon: '♥' },
+    { id: 'triggers', label: 'キーワード返信',       icon: '⚡' },
+    { id: 'ai_reply', label: 'AI自動返答',           icon: '🤖' },
   ]
 
   return (
@@ -89,74 +108,135 @@ export default function SnsPage() {
       <div className="flex gap-2 flex-wrap">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all border
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all border flex items-center gap-1.5
               ${tab === t.id
-                ? t.color === 'cyan'   ? 'bg-[rgba(0,212,255,0.12)] text-[#00d4ff] border-[rgba(0,212,255,0.3)]'
-                : t.color === 'green'  ? 'bg-[rgba(0,229,160,0.12)] text-[#00e5a0] border-[rgba(0,229,160,0.3)]'
-                : t.color === 'amber'  ? 'bg-[rgba(255,184,0,0.12)] text-[#ffb800] border-[rgba(255,184,0,0.3)]'
-                :                        'bg-[rgba(139,92,246,0.12)] text-[#8b5cf6] border-[rgba(139,92,246,0.3)]'
-                : 'bg-transparent text-[#6b6b8a] border-[#1a1a2e] hover:border-[#252540]'
+                ? 'bg-[rgba(0,212,255,0.12)] text-[#00d4ff] border-[rgba(0,212,255,0.3)]'
+                : 'bg-transparent text-[#6b6b8a] border-[#1a1a2e] hover:border-[#252540] hover:text-[#e8e8f4]'
               }`}>
-            {t.label}
+            <span>{t.icon}</span>{t.label}
           </button>
         ))}
       </div>
 
       {/* ── POSTS TAB ── */}
       {tab === 'posts' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          {/* 入力フォーム */}
           <div className="card space-y-4">
-            <h2 className="font-display text-base font-bold">AI投稿生成</h2>
-            <div>
-              <label className="block text-xs text-[#6b6b8a] mb-1.5">媒体</label>
-              <select value={postForm.platform} onChange={e => setPostForm(p => ({ ...p, platform: e.target.value }))} className="input-field">
-                {PLATFORMS.map(p => <option key={p} value={p}>{PLATFORM_LABELS[p]}</option>)}
-              </select>
+            <h2 className="font-display text-base font-bold">AI投稿文を生成</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs text-[#6b6b8a] mb-1.5">媒体</label>
+                <select value={postForm.platform} onChange={e => setPostForm(p => ({ ...p, platform: e.target.value }))} className="input-field">
+                  {PLATFORMS.map(p => <option key={p} value={p}>{PLATFORM_LABELS[p]}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-[#6b6b8a] mb-1.5">トーン</label>
+                <select value={postForm.tone} onChange={e => setPostForm(p => ({ ...p, tone: e.target.value }))} className="input-field">
+                  <option value="friendly">フレンドリー</option>
+                  <option value="professional">プロフェッショナル</option>
+                  <option value="casual">カジュアル</option>
+                  <option value="urgent">緊急・期間限定</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-[#6b6b8a] mb-1.5">業種</label>
+                <input type="text" value={postForm.businessType} onChange={e => setPostForm(p => ({ ...p, businessType: e.target.value }))} placeholder="例: エステサロン" className="input-field" />
+              </div>
             </div>
             <div>
-              <label className="block text-xs text-[#6b6b8a] mb-1.5">業種・ビジネス内容</label>
-              <input type="text" value={postForm.businessType} onChange={e => setPostForm(p => ({ ...p, businessType: e.target.value }))} placeholder="例: エステサロン" className="input-field" />
+              <label className="block text-xs text-[#6b6b8a] mb-1.5">投稿トピック <span className="text-[#ff4560]">*</span></label>
+              <textarea value={postForm.topic} onChange={e => setPostForm(p => ({ ...p, topic: e.target.value }))} placeholder="例: 春の新メニューキャンペーン、料金20%OFF、3月末まで" rows={3} className="input-field resize-none" />
             </div>
-            <div>
-              <label className="block text-xs text-[#6b6b8a] mb-1.5">投稿トピック</label>
-              <textarea value={postForm.topic} onChange={e => setPostForm(p => ({ ...p, topic: e.target.value }))} placeholder="例: 春の新メニュー キャンペーン告知" rows={3} className="input-field resize-none" />
-            </div>
-            <div>
-              <label className="block text-xs text-[#6b6b8a] mb-1.5">トーン</label>
-              <select value={postForm.tone} onChange={e => setPostForm(p => ({ ...p, tone: e.target.value }))} className="input-field">
-                <option value="friendly">フレンドリー</option>
-                <option value="professional">プロフェッショナル</option>
-                <option value="casual">カジュアル</option>
-                <option value="urgent">緊急・期間限定</option>
-              </select>
-            </div>
-            <button onClick={generatePost} disabled={generating} className="w-full btn-cyan justify-center py-3 disabled:opacity-50">
-              {generating ? '生成中...' : '✦ AI投稿文を生成 (5pt)'}
+            <button onClick={generatePost} disabled={generating} className="w-full btn-cyan justify-center py-3 text-sm font-bold disabled:opacity-50 flex items-center gap-2">
+              {generating ? (
+                <><span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"/><span>AI生成中...</span></>
+              ) : (
+                <><span>✦</span><span>AI投稿文を生成する</span><span className="text-xs opacity-70 font-normal">(5pt)</span></>
+              )}
             </button>
           </div>
 
-          {generatedPost && (
-            <div className="card space-y-4">
-              <h2 className="font-display text-base font-bold text-[#00d4ff]">生成結果</h2>
-              <div className="bg-[#0f0f1e] border border-[rgba(0,212,255,0.15)] rounded-xl p-4">
-                <p className="text-sm text-[#c8c8e0] leading-relaxed whitespace-pre-wrap">{generatedPost.content}</p>
+          {/* 生成中プレースホルダー */}
+          {generating && (
+            <div className="card border-[rgba(0,212,255,0.2)] bg-[rgba(0,212,255,0.03)]">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-2 h-2 bg-[#00d4ff] rounded-full animate-pulse"/>
+                <span className="text-sm text-[#00d4ff] font-medium">AIが投稿文を生成しています...</span>
               </div>
+              <div className="space-y-2">
+                {[100, 80, 90, 60].map((w, i) => (
+                  <div key={i} className="h-3 bg-[rgba(255,255,255,0.05)] rounded animate-pulse" style={{ width: `${w}%` }}/>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 生成結果 */}
+          {generatedPost && !generating && (
+            <div className="card border-[rgba(0,212,255,0.25)] bg-[rgba(0,212,255,0.03)] space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-base font-bold text-[#00d4ff] flex items-center gap-2">
+                  <span>✅</span> 生成完了
+                </h2>
+                <span className="text-xs text-[#6b6b8a] bg-[#0f0f1e] px-3 py-1 rounded-full">
+                  {PLATFORM_LABELS[postForm.platform]}用
+                </span>
+              </div>
+
+              {/* 投稿本文 */}
+              <div className="relative bg-[#0a0a14] border border-[rgba(0,212,255,0.15)] rounded-xl p-4">
+                <p className="text-sm text-[#e8e8f4] leading-relaxed whitespace-pre-wrap pr-10">{generatedPost.content}</p>
+                <button
+                  onClick={() => copyToClipboard(generatedPost.content)}
+                  className="absolute top-3 right-3 p-1.5 text-[#6b6b8a] hover:text-[#00d4ff] transition-colors bg-[#0f0f1e] rounded-lg border border-[#1a1a2e] hover:border-[rgba(0,212,255,0.3)]"
+                  title="コピー">
+                  {copied ? '✓' : '📋'}
+                </button>
+              </div>
+
+              {/* ハッシュタグ */}
               {generatedPost.hashtags?.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {generatedPost.hashtags.map((h: string) => (
-                    <span key={h} className="badge-cyan">{h}</span>
-                  ))}
+                <div>
+                  <div className="text-xs text-[#6b6b8a] mb-2">ハッシュタグ</div>
+                  <div className="flex flex-wrap gap-2">
+                    {generatedPost.hashtags.map((h: string) => (
+                      <span key={h} className="badge-cyan cursor-pointer hover:opacity-80" onClick={() => copyToClipboard(h)}>{h}</span>
+                    ))}
+                  </div>
                 </div>
               )}
-              {generatedPost.best_time && (
-                <div className="text-xs text-[#6b6b8a]">🕒 最適投稿時間: <span className="text-[#ffb800]">{generatedPost.best_time}</span></div>
-              )}
-              {generatedPost.platform_tip && (
-                <div className="text-xs text-[#6b6b8a] bg-[#0f0f1e] rounded-lg p-3">💡 {generatedPost.platform_tip}</div>
-              )}
-              <div className="flex gap-2">
-                <button className="flex-1 btn-primary py-2.5 text-xs justify-center">今すぐ投稿</button>
-                <button className="flex-1 btn-ghost py-2.5 text-xs justify-center">予約投稿</button>
+
+              {/* メタ情報 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {generatedPost.best_time && (
+                  <div className="bg-[rgba(255,184,0,0.06)] border border-[rgba(255,184,0,0.15)] rounded-xl p-3">
+                    <div className="text-xs text-[#ffb800] mb-1">🕒 最適投稿時間</div>
+                    <div className="text-sm font-bold text-[#e8e8f4]">{generatedPost.best_time}</div>
+                  </div>
+                )}
+                {generatedPost.platform_tip && (
+                  <div className="bg-[rgba(139,92,246,0.06)] border border-[rgba(139,92,246,0.15)] rounded-xl p-3">
+                    <div className="text-xs text-[#8b5cf6] mb-1">💡 運用ヒント</div>
+                    <div className="text-sm text-[#c8c8e0]">{generatedPost.platform_tip}</div>
+                  </div>
+                )}
+              </div>
+
+              {/* アクションボタン */}
+              <div className="flex gap-3 pt-2">
+                <button className="flex-1 btn-primary py-3 text-sm font-bold justify-center">
+                  📤 今すぐ投稿
+                </button>
+                <button className="flex-1 btn-ghost py-3 text-sm justify-center">
+                  🕒 予約投稿
+                </button>
+                <button
+                  onClick={() => { setGeneratedPost(null); generatePost() }}
+                  className="px-4 btn-ghost py-3 text-sm justify-center text-[#6b6b8a]">
+                  🔄
+                </button>
               </div>
             </div>
           )}
@@ -197,20 +277,19 @@ export default function SnsPage() {
               <label className="block text-xs text-[#6b6b8a] mb-1.5">
                 {jobForm.target_type === 'hashtag' ? 'ハッシュタグ（#なし）' : jobForm.target_type === 'keyword' ? 'キーワード' : jobForm.target_type === 'competitor_followers' ? '競合アカウントID' : '場所名'}
               </label>
-              <input type="text" value={jobForm.target_value} onChange={e => setJobForm(j => ({ ...j, target_value: e.target.value }))} placeholder={jobForm.target_type === 'hashtag' ? 'エステ 美容 渋谷' : '例: @competitor_account'} className="input-field" />
+              <input type="text" value={jobForm.target_value} onChange={e => setJobForm(j => ({ ...j, target_value: e.target.value }))} placeholder={jobForm.target_type === 'hashtag' ? 'エステ 美容 渋谷' : '@competitor'} className="input-field" />
             </div>
             <div>
-              <label className="block text-xs text-[#6b6b8a] mb-1.5">1日の上限 (最大300)</label>
-              <div className="flex items-center gap-3">
-                <input type="range" min={10} max={300} step={10} value={jobForm.daily_limit}
-                  onChange={e => setJobForm(j => ({ ...j, daily_limit: Number(e.target.value) }))}
-                  className="flex-1 accent-[#00e5a0]" />
-                <span className="text-[#00e5a0] font-bold text-sm w-12 text-right">{jobForm.daily_limit}</span>
+              <label className="block text-xs text-[#6b6b8a] mb-1.5">1日の上限: <span className="text-[#00e5a0] font-bold">{jobForm.daily_limit}回</span></label>
+              <input type="range" min={10} max={300} step={10} value={jobForm.daily_limit}
+                onChange={e => setJobForm(j => ({ ...j, daily_limit: Number(e.target.value) }))}
+                className="w-full accent-[#00e5a0]" />
+              <div className="flex justify-between text-[10px] text-[#6b6b8a] mt-1">
+                <span>🟢 低リスク〜100</span><span>🟡 中〜200</span><span>🔴 上限300</span>
               </div>
-              <p className="text-[10px] text-[#6b6b8a] mt-1">凍結リスク低: ~100 / 中: ~200 / 上限: 300</p>
             </div>
-            <button onClick={saveJob} className="w-full btn-primary justify-center py-3" style={{ background: 'var(--green, #00e5a0)', color: '#04040a' }}>
-              ジョブを開始
+            <button onClick={saveJob} className="w-full py-3 rounded-xl font-bold text-sm transition-all" style={{ background: '#00e5a0', color: '#04040a' }}>
+              ♥ ジョブを開始
             </button>
           </div>
 
@@ -224,19 +303,23 @@ export default function SnsPage() {
                   <div key={job.id} className="bg-[#0f0f1e] border border-[#1a1a2e] rounded-xl p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${job.is_active ? 'bg-[#00e5a0] animate-pulse-dot' : 'bg-[#6b6b8a]'}`}/>
-                        <span className="text-xs font-bold text-[#e8e8f4]">{PLATFORM_LABELS[job.platform] || job.platform}</span>
-                        <span className="badge badge-green">{job.job_type === 'like' ? 'いいね' : 'フォロー'}</span>
+                        <div className={`w-2 h-2 rounded-full ${job.is_active ? 'bg-[#00e5a0] animate-pulse' : 'bg-[#6b6b8a]'}`}/>
+                        <span className="text-xs font-bold">{PLATFORM_LABELS[job.platform]}</span>
+                        <span className="badge-cyan text-[10px]">{job.job_type === 'like' ? '♥ いいね' : '+ フォロー'}</span>
                       </div>
                       <button onClick={() => fetch('/api/sns/jobs', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: job.id, is_active: !job.is_active }) }).then(() => fetchJobs())}
-                        className={`text-xs px-3 py-1 rounded-full border transition-colors ${job.is_active ? 'border-[#ff4560] text-[#ff4560] hover:bg-[rgba(255,69,96,0.1)]' : 'border-[#00e5a0] text-[#00e5a0] hover:bg-[rgba(0,229,160,0.1)]'}`}>
+                        className={`text-xs px-3 py-1 rounded-full border transition-colors ${job.is_active ? 'border-[#ff4560] text-[#ff4560]' : 'border-[#00e5a0] text-[#00e5a0]'}`}>
                         {job.is_active ? '停止' : '再開'}
                       </button>
                     </div>
                     <p className="text-xs text-[#6b6b8a]">{job.target_type}: <span className="text-[#e8e8f4]">{job.target_value}</span></p>
-                    <div className="flex gap-4 mt-2 text-[10px] text-[#6b6b8a]">
-                      <span>今日: <span className="text-[#00e5a0]">{job.executed_today}</span>/{job.daily_limit}</span>
-                      <span>累計: {job.total_executed}</span>
+                    <div className="mt-3">
+                      <div className="flex justify-between text-[10px] text-[#6b6b8a] mb-1">
+                        <span>本日の実行</span><span>{job.executed_today}/{job.daily_limit}</span>
+                      </div>
+                      <div className="h-1.5 bg-[#1a1a2e] rounded-full overflow-hidden">
+                        <div className="h-full bg-[#00e5a0] rounded-full" style={{ width: `${(job.executed_today/job.daily_limit)*100}%` }}/>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -270,11 +353,11 @@ export default function SnsPage() {
             </div>
             <div>
               <label className="block text-xs text-[#6b6b8a] mb-1.5">トリガーキーワード（カンマ区切り）</label>
-              <input type="text" value={triggerForm.keywords} onChange={e => setTriggerForm(t => ({ ...t, keywords: e.target.value }))} placeholder="欲しい, 詳細, プレゼント, 送って" className="input-field" />
+              <input type="text" value={triggerForm.keywords} onChange={e => setTriggerForm(t => ({ ...t, keywords: e.target.value }))} placeholder="欲しい, 詳細, プレゼント" className="input-field" />
             </div>
             <div>
-              <label className="block text-xs text-[#6b6b8a] mb-1.5">返信テンプレート <span className="text-[#ffb800]">&#123;URL&#125;</span> でURL挿入</label>
-              <textarea value={triggerForm.reply_template} onChange={e => setTriggerForm(t => ({ ...t, reply_template: e.target.value }))} rows={3} placeholder="ご連絡ありがとうございます！こちらの専用URLからどうぞ🎁&#10;{URL}" className="input-field resize-none" />
+              <label className="block text-xs text-[#6b6b8a] mb-1.5">返信テンプレート <span className="text-[#ffb800]">{'{URL}'}</span> でURL挿入</label>
+              <textarea value={triggerForm.reply_template} onChange={e => setTriggerForm(t => ({ ...t, reply_template: e.target.value }))} rows={3} placeholder={'ご連絡ありがとうございます！専用URLからどうぞ🎁\n{URL}'} className="input-field resize-none" />
             </div>
             <div>
               <label className="block text-xs text-[#6b6b8a] mb-1.5">URLタイプ</label>
@@ -289,9 +372,7 @@ export default function SnsPage() {
               <label className="block text-xs text-[#6b6b8a] mb-1.5">送り先URL</label>
               <input type="url" value={triggerForm.destination_url} onChange={e => setTriggerForm(t => ({ ...t, destination_url: e.target.value }))} placeholder="https://example.com/product" className="input-field" />
             </div>
-            <button onClick={saveTrigger} className="w-full btn-primary justify-center py-3">
-              トリガーを作成
-            </button>
+            <button onClick={saveTrigger} className="w-full btn-primary justify-center py-3">⚡ トリガーを作成</button>
           </div>
 
           <div className="card">
@@ -332,17 +413,16 @@ export default function SnsPage() {
           <div className="card space-y-4">
             <h2 className="font-display text-base font-bold">AI自動返答設定</h2>
             <div className="space-y-3">
-              {['auto', 'approval', 'hybrid'].map(mode => (
-                <label key={mode} className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all
-                  ${mode === 'auto' ? 'border-[rgba(0,229,160,0.2)] bg-[rgba(0,229,160,0.04)]' : mode === 'approval' ? 'border-[rgba(255,184,0,0.2)] bg-[rgba(255,184,0,0.04)]' : 'border-[rgba(139,92,246,0.2)] bg-[rgba(139,92,246,0.04)]'}`}>
-                  <input type="radio" name="mode" value={mode} className="mt-0.5" defaultChecked={mode === 'approval'} />
+              {[
+                { id: 'auto', label: '完全自動モード', desc: 'AIが即座に返答を送信。24時間無人対応。', color: '#00e5a0' },
+                { id: 'approval', label: '承認モード（推奨）', desc: 'AI返答案をLINEに送付→承認後に送信。安全重視。', color: '#ffb800' },
+                { id: 'hybrid', label: 'ハイブリッドモード', desc: '一般質問は自動、クレーム・価格交渉は承認待ち。', color: '#8b5cf6' },
+              ].map(mode => (
+                <label key={mode.id} className="flex items-start gap-3 p-4 rounded-xl border border-[#1a1a2e] cursor-pointer hover:border-[#252540] transition-colors">
+                  <input type="radio" name="mode" value={mode.id} className="mt-0.5" defaultChecked={mode.id === 'approval'} />
                   <div>
-                    <div className={`text-sm font-bold ${mode === 'auto' ? 'text-[#00e5a0]' : mode === 'approval' ? 'text-[#ffb800]' : 'text-[#8b5cf6]'}`}>
-                      {mode === 'auto' ? '完全自動モード' : mode === 'approval' ? '承認モード（推奨）' : 'ハイブリッドモード'}
-                    </div>
-                    <div className="text-xs text-[#6b6b8a] mt-1">
-                      {mode === 'auto' ? 'AIが即座に返答を送信。24時間無人対応。' : mode === 'approval' ? 'AI返答案をLINEに送付→承認後に送信。安全重視。' : '一般質問は自動、クレーム・価格交渉は承認待ちに自動振り分け。'}
-                    </div>
+                    <div className="text-sm font-bold" style={{ color: mode.color }}>{mode.label}</div>
+                    <div className="text-xs text-[#6b6b8a] mt-1">{mode.desc}</div>
                   </div>
                 </label>
               ))}
@@ -363,14 +443,14 @@ export default function SnsPage() {
                 {replyQueue.map(item => (
                   <div key={item.id} className="bg-[#0f0f1e] border border-[rgba(139,92,246,0.2)] rounded-xl p-4">
                     <div className="text-xs text-[#6b6b8a] mb-2">{item.sender_name} · {item.platform}</div>
-                    <div className="bg-[rgba(255,255,255,0.04)] rounded-lg p-3 mb-2 text-xs text-[#c8c8e0]">{item.original_text}</div>
-                    <div className="bg-[rgba(139,92,246,0.06)] border border-[rgba(139,92,246,0.15)] rounded-lg p-3 mb-3 text-xs text-[#c8c8e0]">
+                    <div className="bg-[rgba(255,255,255,0.04)] rounded-lg p-3 mb-2 text-xs">{item.original_text}</div>
+                    <div className="bg-[rgba(139,92,246,0.06)] border border-[rgba(139,92,246,0.15)] rounded-lg p-3 mb-3 text-xs">
                       <div className="text-[10px] text-[#8b5cf6] mb-1">AI返答案</div>
                       {item.ai_reply}
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => approveReply(item.id)} className="flex-1 bg-[#8b5cf6] text-white text-xs font-bold py-2 rounded-lg hover:bg-[#7c3aed] transition-colors">承認して送信</button>
-                      <button className="px-3 bg-transparent border border-[#252540] text-[#6b6b8a] text-xs py-2 rounded-lg hover:border-[#ff4560] hover:text-[#ff4560] transition-colors">修正</button>
+                      <button className="px-4 text-xs py-2 rounded-lg border border-[#252540] text-[#6b6b8a] hover:border-[#ff4560] hover:text-[#ff4560] transition-colors">修正</button>
                     </div>
                   </div>
                 ))}
