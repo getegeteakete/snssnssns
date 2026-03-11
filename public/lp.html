@@ -667,6 +667,62 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
   #chat-fab{right:24px;}
   #pagetop{right:24px;}
 }
+
+/* ── スマホ追加修正 ─────────────────── */
+@media(max-width:640px){
+  /* Nav */
+  nav { height:60px; }
+  .navlinks { display:none !important; }
+  .nav-i { padding:0 16px; }
+  .logo-txt { font-size:20px; }
+  
+  /* Hero */
+  #hero { padding-top:60px; }
+  .hero-title { font-size:clamp(36px,10vw,72px) !important; letter-spacing:-2px !important; }
+  .hero-sub { font-size:14px !important; }
+  .hero-btns { flex-direction:column; align-items:stretch; }
+  .hero-btns a { text-align:center; }
+  
+  /* Sections */
+  .rv { font-size:28px !important; letter-spacing:-1px !important; }
+  .sub { font-size:14px !important; }
+  
+  /* Cards */
+  .pc { min-width:280px !important; }
+  .pricelist { flex-direction:column; align-items:center; }
+  
+  /* CTA buttons */
+  .btn { padding:13px 24px !important; font-size:14px !important; width:100%; text-align:center; box-sizing:border-box; }
+  
+  /* Pricing cards on mobile */
+  .pricing-grid, .plans { 
+    display:flex !important; 
+    flex-direction:column !important; 
+    align-items:center !important;
+    gap:16px !important;
+  }
+  
+  /* Footer */
+  .footer-cols { flex-direction:column !important; gap:32px !important; }
+  .fc-col { min-width:unset !important; }
+  
+  /* General padding */
+  .W { padding-left:16px !important; padding-right:16px !important; }
+  section { padding:60px 0 !important; }
+  
+  /* Hamburger menu placeholder */
+  .nav-mobile-btn {
+    display:flex !important;
+    width:36px; height:36px;
+    align-items:center; justify-content:center;
+    background:rgba(255,255,255,.07);
+    border-radius:8px; cursor:pointer;
+  }
+}
+@media(min-width:641px){
+  .nav-mobile-btn { display:none !important; }
+}
+
 </style>
 </head>
 <body>
@@ -693,9 +749,31 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
     <div style="display:flex;align-items:center;gap:10px;">
       <a href="/auth/login" style="font-size:13px;font-weight:500;color:rgba(232,232,244,.6);text-decoration:none;padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,.1);transition:all .2s;" onmouseover="this.style.color='#e8e8f4';this.style.borderColor='rgba(255,255,255,.25)'" onmouseout="this.style.color='rgba(232,232,244,.6)';this.style.borderColor='rgba(255,255,255,.1)'">ログイン</a>
       <a href="/auth/register" class="nav-cta">無料で試す →</a>
+      <div class="nav-mobile-btn" onclick="toggleMobileNav()" aria-label="メニュー">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#e8e8f4" stroke-width="1.8" stroke-linecap="round">
+          <line x1="2" y1="5" x2="16" y2="5"/><line x1="2" y1="9" x2="16" y2="9"/><line x1="2" y1="13" x2="16" y2="13"/>
+        </svg>
+      </div>
     </div>
   </div>
 </nav>
+
+<!-- Mobile Nav Drawer -->
+<div id="mobile-nav" style="display:none;position:fixed;top:60px;inset-inline:0;background:rgba(4,4,10,.97);border-bottom:1px solid rgba(255,255,255,.08);z-index:998;padding:16px 20px 24px;">
+  <div style="display:flex;flex-direction:column;gap:4px;">
+    <a href="#features" onclick="closeMobileNav()" style="color:rgba(232,232,244,.8);text-decoration:none;font-size:15px;font-weight:500;padding:12px 16px;border-radius:10px;border-bottom:1px solid rgba(255,255,255,.05);">✦ 機能</a>
+    <a href="#sns-auto" onclick="closeMobileNav()" style="color:rgba(232,232,244,.8);text-decoration:none;font-size:15px;font-weight:500;padding:12px 16px;border-radius:10px;border-bottom:1px solid rgba(255,255,255,.05);">📱 SNS自動化</a>
+    <a href="#gmb" onclick="closeMobileNav()" style="color:rgba(232,232,244,.8);text-decoration:none;font-size:15px;font-weight:500;padding:12px 16px;border-radius:10px;border-bottom:1px solid rgba(255,255,255,.05);">📍 GMB</a>
+    <a href="#affiliate" onclick="closeMobileNav()" style="color:rgba(232,232,244,.8);text-decoration:none;font-size:15px;font-weight:500;padding:12px 16px;border-radius:10px;border-bottom:1px solid rgba(255,255,255,.05);">💰 アフィリエイト</a>
+    <a href="#pricing" onclick="closeMobileNav()" style="color:rgba(232,232,244,.8);text-decoration:none;font-size:15px;font-weight:500;padding:12px 16px;border-radius:10px;border-bottom:1px solid rgba(255,255,255,.05);">💳 料金</a>
+    <a href="#faq" onclick="closeMobileNav()" style="color:rgba(232,232,244,.8);text-decoration:none;font-size:15px;font-weight:500;padding:12px 16px;border-radius:10px;">❓ FAQ</a>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;">
+    <a href="/auth/register" style="background:linear-gradient(135deg,#ffb800,#ff8c00);color:#04040a;text-align:center;font-weight:800;font-size:15px;padding:14px;border-radius:12px;text-decoration:none;">無料で始める（30pt付き）→</a>
+    <a href="/auth/login" style="background:rgba(255,255,255,.07);color:#e8e8f4;text-align:center;font-weight:500;font-size:14px;padding:13px;border-radius:12px;text-decoration:none;border:1px solid rgba(255,255,255,.1);">ログイン</a>
+  </div>
+</div>
+
 
 <!-- ▸ HERO -->
 <section id="hero">
@@ -706,7 +784,7 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
       <h1 style="animation:fadeUp .9s both">投稿するAIは、<br><span class="accent">もう古い。</span></h1>
       <p class="hero-desc" style="animation:fadeUp .9s .16s both">戦略を立て、数字を読み、売上を作りにいく。AIMOは7つのステップを自律的に回し続けます。</p>
       <div class="hero-actions" style="animation:fadeUp .9s .3s both">
-        <a href="#pricing" class="btn btn-amber">30トークン無料で試す →</a>
+        <a href="/auth/register" class="btn btn-amber">30トークン無料で試す →</a>
         <a href="#features" class="btn btn-ghost">機能を見る</a>
       </div>
       <div class="hero-trust" style="animation:fadeUp .9s .42s both">
@@ -1591,7 +1669,7 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
     <!-- CTA inside section -->
     <div style="margin-top:24px;text-align:center;" class="rv">
       <p style="font-size:15px;color:var(--muted);margin-bottom:24px;font-weight:300;">今日スタートする人と、3ヶ月後にスタートする人。<br>1年後には<strong style="color:var(--txt);">取り返せない差</strong>が生まれています。</p>
-      <a href="#pricing" class="btn btn-amber" style="font-size:15px;padding:16px 44px;">今すぐ30トークン無料で試す →</a>
+      <a href="/auth/register" class="btn btn-amber" style="font-size:15px;padding:16px 44px;">今すぐ30トークン無料で試す →</a>
       <div style="margin-top:14px;font-size:12px;color:var(--muted);">クレジットカード不要 · 最短5分でスタート · いつでも解約可</div>
     </div>
   </div>
@@ -1629,7 +1707,7 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
             <div class="rw-row"><div class="rw-l">有料転換（初月）</div><div class="rw-v">20%</div></div>
             <div class="rw-row"><div class="rw-l">継続課金報酬</div><div class="rw-v">5%<span style="font-size:12px;color:var(--muted);font-weight:300;">/月</span></div></div>
             <div class="rw-row"><div class="rw-l">最低支払額</div><div class="rw-v">¥3,000〜</div></div>
-            <a href="#pricing" class="btn btn-amber" style="display:flex;justify-content:center;margin-top:22px;">アフィリエイトを始める →</a>
+            <a href="/auth/register" class="btn btn-amber" style="display:flex;justify-content:center;margin-top:22px;">アフィリエイトを始める →</a>
           </div>
           <div class="lp-box">
             <div style="font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">オプション</div>
@@ -1705,10 +1783,10 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
     <h2 class="rv">シンプルな料金体系</h2>
     <p class="sub rv">月額サブスクと都度払いポイントを選べます。まずは無料体験から。</p>
     <div class="price-grid rv">
-      <div class="pc"><div class="pname">Free</div><div class="pamt"><span>¥0</span></div><div class="pdesc">無料体験トークン30pt付き。まずAIMOを体験してください。</div><div class="pfeat">✓ AI生成 3回（5pt/回）</div><div class="pfeat">✓ SNS自動投稿 3回</div><div class="pfeat">✓ 基本ダッシュボード</div><div class="pfeat"><span class="pf-off">—</span> 画像生成</div><div class="pfeat"><span class="pf-off">—</span> LINE承認フロー</div><div class="pfeat"><span class="pf-off">—</span> GMB自動投稿</div><a href="#" class="pbtn pbo">無料で始める</a></div>
-      <div class="pc"><div class="pname">Starter</div><div class="pamt"><span>¥3,900</span><span class="punit">/月</span></div><div class="pdesc">個人・スモールビジネス向け。基本的なSNS自動化を低コストで開始。</div><div class="pfeat">✓ AI投稿生成 月30件</div><div class="pfeat">✓ SNS自動投稿 月30件</div><div class="pfeat">✓ 週次メールレポート</div><div class="pfeat"><span class="pf-off">—</span> 画像生成</div><div class="pfeat"><span class="pf-off">—</span> LINE承認フロー</div><div class="pfeat"><span class="pf-off">—</span> GMB自動投稿</div><a href="#" class="pbtn pbo">Starterを始める</a></div>
-      <div class="pc pop"><div class="pop-tag">最人気プラン</div><div class="pname">Pro</div><div class="pamt"><span>¥6,900</span><span class="punit">/月</span></div><div class="pdesc">中小企業・個人事業主に最適。LINE・画像・GMB・アフィリエイトまで全部入り。</div><div class="pfeat">✓ AI投稿生成 月100件</div><div class="pfeat">✓ AI画像生成 月20枚</div><div class="pfeat">✓ CVR改善提案</div><div class="pfeat">✓ LINE承認フロー</div><div class="pfeat"><strong>✓ GMB自動投稿 月8件</strong></div><div class="pfeat">✓ AIMOアフィリエイト発行</div><a href="#" class="pbtn pbs">Proを始める →</a></div>
-      <div class="pc"><div class="pname">Business</div><div class="pamt"><span>¥14,800</span><span class="punit">/月</span></div><div class="pdesc">成長企業向け。EC アフィリエイト管理・動画生成・競合リサーチ・GMBフル機能。</div><div class="pfeat">✓ AI投稿生成 月200件</div><div class="pfeat">✓ AI動画生成 月3本</div><div class="pfeat">✓ 競合リサーチ自動化</div><div class="pfeat"><strong>✓ GMB自動投稿 月30件</strong></div><div class="pfeat"><strong>✓ EC アフィリエイト管理</strong></div><div class="pfeat">✓ 口コミAI返信 無制限</div><a href="#" class="pbtn pbo">Businessを始める</a></div>
+      <div class="pc"><div class="pname">Free</div><div class="pamt"><span>¥0</span></div><div class="pdesc">無料体験トークン30pt付き。まずAIMOを体験してください。</div><div class="pfeat">✓ AI生成 3回（5pt/回）</div><div class="pfeat">✓ SNS自動投稿 3回</div><div class="pfeat">✓ 基本ダッシュボード</div><div class="pfeat"><span class="pf-off">—</span> 画像生成</div><div class="pfeat"><span class="pf-off">—</span> LINE承認フロー</div><div class="pfeat"><span class="pf-off">—</span> GMB自動投稿</div><a href="/auth/register" class="pbtn pbo">無料で始める</a></div>
+      <div class="pc"><div class="pname">Starter</div><div class="pamt"><span>¥3,900</span><span class="punit">/月</span></div><div class="pdesc">個人・スモールビジネス向け。基本的なSNS自動化を低コストで開始。</div><div class="pfeat">✓ AI投稿生成 月30件</div><div class="pfeat">✓ SNS自動投稿 月30件</div><div class="pfeat">✓ 週次メールレポート</div><div class="pfeat"><span class="pf-off">—</span> 画像生成</div><div class="pfeat"><span class="pf-off">—</span> LINE承認フロー</div><div class="pfeat"><span class="pf-off">—</span> GMB自動投稿</div><a href="/auth/register?plan=starter" class="pbtn pbo">Starterを始める</a></div>
+      <div class="pc pop"><div class="pop-tag">最人気プラン</div><div class="pname">Pro</div><div class="pamt"><span>¥6,900</span><span class="punit">/月</span></div><div class="pdesc">中小企業・個人事業主に最適。LINE・画像・GMB・アフィリエイトまで全部入り。</div><div class="pfeat">✓ AI投稿生成 月100件</div><div class="pfeat">✓ AI画像生成 月20枚</div><div class="pfeat">✓ CVR改善提案</div><div class="pfeat">✓ LINE承認フロー</div><div class="pfeat"><strong>✓ GMB自動投稿 月8件</strong></div><div class="pfeat">✓ AIMOアフィリエイト発行</div><a href="/auth/register?plan=pro" class="pbtn pbs">Proを始める →</a></div>
+      <div class="pc"><div class="pname">Business</div><div class="pamt"><span>¥14,800</span><span class="punit">/月</span></div><div class="pdesc">成長企業向け。EC アフィリエイト管理・動画生成・競合リサーチ・GMBフル機能。</div><div class="pfeat">✓ AI投稿生成 月200件</div><div class="pfeat">✓ AI動画生成 月3本</div><div class="pfeat">✓ 競合リサーチ自動化</div><div class="pfeat"><strong>✓ GMB自動投稿 月30件</strong></div><div class="pfeat"><strong>✓ EC アフィリエイト管理</strong></div><div class="pfeat">✓ 口コミAI返信 無制限</div><a href="/auth/register?plan=business" class="pbtn pbo">Businessを始める</a></div>
     </div>
     <div class="pts-box rv">
       <div class="pts-title">都度払いポイント</div>
@@ -1758,7 +1836,7 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
     <h2 class="cta-h" style="animation:fadeUp .9s both">今日から、AIに<br><span>売上を作らせよう。</span></h2>
     <p class="cta-sub">30トークン無料でお試し。クレジットカード不要。最短5分でスタート。</p>
     <div class="cta-btns">
-      <a href="#" class="btn btn-amber" style="font-size:15px;padding:16px 40px;">今すぐ無料で始める →</a>
+      <a href="/auth/register" class="btn btn-amber" style="font-size:15px;padding:16px 40px;">今すぐ無料で始める →</a>
       <a href="#features" class="btn btn-ghost" style="font-size:14px;padding:15px 28px;">機能を詳しく見る</a>
     </div>
     <div class="cta-trust"><span>クレカ不要</span><span>最短5分でスタート</span><span>いつでも解約可能</span></div>
@@ -1926,6 +2004,15 @@ function quickSend(btn,msg){
   showTyping();
   setTimeout(()=>{hideTyping();addMsg(getReply(msg),false);},900+Math.random()*300);
 }
+
+function toggleMobileNav(){
+  var d=document.getElementById('mobile-nav');
+  d.style.display=d.style.display==='none'?'block':'none';
+}
+function closeMobileNav(){
+  document.getElementById('mobile-nav').style.display='none';
+}
+
 </script>
 </body>
 </html>
