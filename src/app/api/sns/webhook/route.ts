@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const { platform, user_id, event_type, sender_id, sender_name, text, post_id, comment_id } = body
 
-  const supabase = createAdminClient()
+  const supabase = (createAdminClient() as any)
 
   // 1. Find active keyword triggers for this user+platform
   const { data: triggers } = await supabase
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
   const userId = searchParams.get('user_id')
   const status = searchParams.get('status') || 'pending'
 
-  const supabase = createAdminClient()
+  const supabase = (createAdminClient() as any)
   const { data } = await supabase
     .from('ai_reply_queue')
     .select('*')

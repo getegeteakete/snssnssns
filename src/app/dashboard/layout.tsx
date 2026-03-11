@@ -6,7 +6,7 @@ import DashboardHeader from '@/components/dashboard/Header'
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   let profile = null
   try {
-    const supabase = createServerSupabaseClient()
+    const supabase = createServerSupabaseClient() as any
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/auth/login')
     const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()

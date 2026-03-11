@@ -34,7 +34,7 @@ async function publishToGmb(accessToken: string, locationId: string, post: {
 }
 
 export async function GET(request: NextRequest) {
-  const supabase = createServerSupabaseClient()
+  const supabase = (createServerSupabaseClient() as any)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = createServerSupabaseClient()
+  const supabase = (createServerSupabaseClient() as any)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

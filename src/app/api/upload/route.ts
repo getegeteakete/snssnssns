@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase/client'
 
 export async function POST(request: NextRequest) {
-  const supabase = createServerSupabaseClient()
+  const supabase = (createServerSupabaseClient() as any)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -17,11 +17,11 @@ export async function POST(request: NextRequest) {
 
     const ext = file.name.split('.').pop()
     const filename = `${user.id}/${Date.now()}.${ext}`
-    const admin = createAdminClient()
+    const admin = (createAdminClient() as any)
 
     // バケット作成（存在しない場合）
     const { data: buckets } = await admin.storage.listBuckets()
-    if (!buckets?.find(b => b.name === 'post-images')) {
+    if (!buckets?.find((b: any) => b.name === 'post-images')) {
       await admin.storage.createBucket('post-images', { public: true, fileSizeLimit: 5242880 })
     }
 

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 
@@ -15,7 +15,7 @@ const POINT_PACKAGES = [
   { id: 'points_1200', points: 1200, price: 10000, label: '1,200pt', sublabel: '¥10,000 (17%OFF)', badge: '最安' },
 ]
 
-export default function BillingPage() {
+function BillingInner() {
   const [currentPlan, setCurrentPlan] = useState('free')
   const [points, setPoints] = useState(0)
   const [loading, setLoading] = useState<string | null>(null)
@@ -154,4 +154,8 @@ export default function BillingPage() {
       )}
     </div>
   )
+}
+
+export default function BillingPage() {
+  return <Suspense fallback={<div className="p-6 text-[#6b6b8a]">読み込み中...</div>}><BillingInner /></Suspense>
 }

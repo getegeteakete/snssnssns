@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Log click
-  const supabase = createAdminClient()
+  const supabase = (createAdminClient() as any)
   await supabase.from('ec_affiliators')
     .update({ clicks: supabase.rpc('increment', { row_id: tag }) as any })
     .eq('unique_tag', tag)

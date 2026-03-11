@@ -81,6 +81,18 @@ export default function SnsPage() {
     setGenerating(false)
   }
 
+  async function saveJob() {
+    const r = await fetch('/api/sns/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(jobForm) })
+    const data = await r.json()
+    if (r.ok) { toast.success('ジョブを作成しました'); fetchJobs() }
+    else toast.error(data.error || 'エラーが発生しました')
+  }
+
+  async function toggleTrigger(id: string, is_active: boolean) {
+    await fetch('/api/sns/triggers', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, is_active }) })
+    fetchTriggers()
+  }
+
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text)
     setCopied(true); toast.success('コピーしました！')

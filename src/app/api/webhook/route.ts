@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 })
   }
 
-  const supabase = createAdminClient()
+  const supabase = (createAdminClient() as any)
 
   switch (event.type) {
     // ── Subscription created/updated ──────────────────────────

@@ -3,7 +3,7 @@ import { createServerSupabaseClient, createAdminClient } from '@/lib/supabase/cl
 
 // GET: list triggers for current user
 export async function GET(request: NextRequest) {
-  const supabase = createServerSupabaseClient()
+  const supabase = (createServerSupabaseClient() as any)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
 // POST: create trigger
 export async function POST(request: NextRequest) {
-  const supabase = createServerSupabaseClient()
+  const supabase = (createServerSupabaseClient() as any)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
 // PATCH: toggle active
 export async function PATCH(request: NextRequest) {
-  const supabase = createServerSupabaseClient()
+  const supabase = (createServerSupabaseClient() as any)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -55,7 +55,7 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE: remove trigger
 export async function DELETE(request: NextRequest) {
-  const supabase = createServerSupabaseClient()
+  const supabase = (createServerSupabaseClient() as any)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

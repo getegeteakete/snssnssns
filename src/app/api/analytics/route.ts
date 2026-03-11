@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/client'
 import { generateProposal } from '@/lib/anthropic/agents'
 
 export async function GET(request: NextRequest) {
-  const supabase = createServerSupabaseClient()
+  const supabase = (createServerSupabaseClient() as any)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

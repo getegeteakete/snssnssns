@@ -9,7 +9,7 @@ const AIMO_REWARDS = {
 
 // GET: affiliate dashboard data
 export async function GET(request: NextRequest) {
-  const supabase = createServerSupabaseClient()
+  const supabase = (createServerSupabaseClient() as any)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
 // POST: create EC program or handle affiliate actions
 export async function POST(request: NextRequest) {
-  const supabase = createServerSupabaseClient()
+  const supabase = (createServerSupabaseClient() as any)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

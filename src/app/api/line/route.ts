@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 403 })
   }
 
-  const supabase = createAdminClient()
+  const supabase = (createAdminClient() as any)
   const events = parseLineWebhook(JSON.parse(body))
 
   for (const event of events) {

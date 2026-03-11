@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const supabase = createAdminClient()
+  const supabase = (createAdminClient() as any)
   const now = new Date().toISOString()
 
   // Get scheduled posts due to publish

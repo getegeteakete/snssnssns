@@ -14,7 +14,7 @@ function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const referralCode = searchParams.get('ref')
-  const supabase = createClient()
+  const supabase = createClient() as any
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()

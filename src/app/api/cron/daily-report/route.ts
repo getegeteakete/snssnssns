@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const supabase = createAdminClient()
+  const supabase = (createAdminClient() as any)
   const today = new Date().toISOString().slice(0, 10)
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
 
@@ -30,8 +30,8 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .eq('date', yesterday)
 
-    const pv = analytics?.find(a => a.metric_type === 'page_views')?.value || 0
-    const cv = analytics?.find(a => a.metric_type === 'conversions')?.value || 0
+    const pv = analytics?.find((a: any) => a.metric_type === 'page_views')?.value || 0
+    const cv = analytics?.find((a: any) => a.metric_type === 'conversions')?.value || 0
     const cvr = pv > 0 ? ((cv / pv) * 100).toFixed(2) : '0.00'
 
     // Check for anomalies

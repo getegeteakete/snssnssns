@@ -5,7 +5,7 @@ import ProposalFeed from '@/components/dashboard/ProposalFeed'
 import RecentPosts from '@/components/dashboard/RecentPosts'
 
 export default async function DashboardPage() {
-  const supabase = createServerSupabaseClient()
+  const supabase = createServerSupabaseClient() as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
