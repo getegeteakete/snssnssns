@@ -278,7 +278,7 @@ nav.on{
 /* ══════════════════════════════════════
    STATS
 ══════════════════════════════════════ */
-#stats{background:var(--s1);}
+#stats{background:#f8f9fc;}
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--b1);border-radius:20px;overflow:hidden;margin-top:72px;}
 .sb{padding:48px 32px;border-right:1px solid var(--b1);}
 .sb:last-child{border-right:none;}
@@ -385,7 +385,7 @@ nav.on{
 /* ══════════════════════════════════════
    COMPARISON
 ══════════════════════════════════════ */
-#comparison{background:var(--s1);}
+#comparison{background:#f8f9fc;}
 .comp{margin-top:72px;border:1px solid var(--b1);border-radius:20px;overflow:hidden;}
 .c-head{display:grid;grid-template-columns:2.4fr 1fr 1fr 1.3fr;background:var(--s2);}
 .chcell{padding:16px 22px;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
@@ -401,7 +401,7 @@ nav.on{
 /* ══════════════════════════════════════
    PRICING
 ══════════════════════════════════════ */
-#pricing{background:var(--bg);}
+#pricing{background:#ffffff;}
 .price-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:72px;}
 .pc{background:var(--s1);border:1px solid var(--b1);border-radius:18px;padding:34px 26px;transition:all .3s var(--ease);position:relative;}
 .pc:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.3);}
@@ -723,6 +723,131 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
   .nav-mobile-btn { display:none !important; }
 }
 
+
+/* ══════════════════════════════════════
+   LIGHT SECTIONS
+══════════════════════════════════════ */
+.section-light {
+  background: #f8f9fc !important;
+  color: #0d0d1a;
+}
+.section-white {
+  background: #ffffff !important;
+  color: #0d0d1a;
+}
+.section-light .rv,
+.section-white .rv,
+.section-light h2,
+.section-white h2 { color: #0d0d1a; }
+
+.section-light .sub,
+.section-white .sub,
+.section-light p,
+.section-white p { color: #4a4a6a; }
+
+.section-light .eyebrow,
+.section-white .eyebrow { color: #00a0bf; }
+.section-light .eyebrow::before,
+.section-white .eyebrow::before { background: #00a0bf; }
+
+/* stats cards on light bg */
+.section-light .stat-card,
+.section-white .stat-card {
+  background: #ffffff;
+  border-color: #e2e4ef;
+  box-shadow: 0 2px 16px rgba(0,0,0,.06);
+}
+.section-light .stat-num,
+.section-white .stat-num { color: #0d0d1a; }
+.section-light .stat-lbl,
+.section-white .stat-lbl { color: #4a4a6a; }
+
+/* comparison table on light bg */
+.section-light .c-head { background: #eef0f8 !important; }
+.section-light .c-head div { color: #0d0d1a; }
+.section-light .c-row { border-color: #e2e4ef !important; }
+.section-light .c-row:hover { background: #eef0f8 !important; }
+.section-light .c-cell { color: #0d0d1a; }
+.section-light .c-label { color: #4a4a6a; }
+.section-light .c-aimo { color: #007a9a; font-weight:700; }
+
+/* pricing on white */
+.section-white .pc {
+  background: #f8f9fc !important;
+  border-color: #e2e4ef !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,.06);
+}
+.section-white .pc:hover {
+  box-shadow: 0 8px 40px rgba(0,0,0,.10);
+  border-color: #c5c8df !important;
+}
+.section-white .pc .pname { color: #0d0d1a; }
+.section-white .pc .pamt span { color: #0d0d1a; }
+.section-white .pc .punit { color: #4a4a6a; }
+.section-white .pc .pdesc { color: #4a4a6a; }
+.section-white .pc .pfeat { color: #2a2a4a; }
+.section-white .pc .pf-off { color: #a0a0c0; }
+.section-white .pc .pbo {
+  background: #f0f1f8;
+  color: #0d0d1a;
+  border: 1px solid #d0d2e8;
+}
+.section-white .pc .pbo:hover { background: #e2e4ef; }
+.section-white .pts-box {
+  background: #f8f9fc !important;
+  border-color: #e2e4ef !important;
+}
+.section-white .ptc {
+  background: #ffffff !important;
+  border-color: #e2e4ef !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+.section-white .ptc .pts-n { color: #0d0d1a; }
+.section-white .ptc .pts-p { color: #4a4a6a; }
+.section-white .pop { border-color: #ffb800 !important; box-shadow: 0 8px 40px rgba(255,184,0,.15) !important; }
+
+/* CTA section light */
+.section-cta-light {
+  background: linear-gradient(135deg, #0d0d2a 0%, #0a1628 50%, #04040a 100%);
+}
+
+
+.section-light .faq-item { border-color: #e2e4ef !important; }
+.section-light .faq-q { color: #0d0d1a !important; background: transparent; }
+.section-light .faq-q:hover { background: #eef0f8 !important; }
+.section-light .faq-a { color: #4a4a6a !important; background: #f0f2f8 !important; border-top: 1px solid #e2e4ef; }
+.section-light .faq-q-ico svg { stroke: #4a4a6a; }
+
+
+.section-light .c-feat { color: #2a2a4a !important; }
+.section-light .c-check-y { color: #00875a; font-weight:700; }
+.section-light .c-check-n { color: #b0b0c8; }
+.section-light .c-aimo-col { background: rgba(0,212,255,.06) !important; }
+
+
+.section-light .c-head { background: #eef0f8 !important; border-radius: 10px 10px 0 0; }
+.section-light .c-head div { color: #0d0d1a !important; font-weight: 600; }
+.section-light .c-row { background: transparent !important; }
+.section-light .c-row:nth-child(even) { background: #f4f5fb !important; }
+.section-light .c-row:hover { background: #eaecf5 !important; }
+.section-light .c-cell { color: #2a2a4a !important; }
+
+
+/* Stats section light overrides */
+.section-light .sb { border-color: #e2e4ef !important; }
+.section-light .sb:last-child { border-right-color: transparent !important; }
+.section-light .sn { color: #0d0d1a !important; }
+.section-light .sl { color: #00a0bf !important; }
+.section-light .ss { color: #4a4a6a !important; }
+.section-light .stats-row { border: 1px solid #e2e4ef; border-radius: 16px; background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,.06); overflow: hidden; }
+
+
+/* Colored top accent on light sections */
+#stats.section-light { border-top: 3px solid #00d4ff; }
+#comparison.section-light { border-top: 3px solid #e2e4ef; }
+#pricing.section-white { border-top: 3px solid #ffb800; }
+#faq.section-light { border-top: 3px solid #e2e4ef; }
+
 </style>
 </head>
 <body>
@@ -966,7 +1091,7 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
 </section>
 
 <!-- ▸ STATS -->
-<section id="stats">
+<section id="stats" class="section-light">
   <div class="W">
     <div class="eyebrow rv">実績</div>
     <h2 class="rv">数字で見るAIMOの効果</h2>
@@ -1300,7 +1425,7 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
 </section>
 
 <!-- ▸ COMPARISON -->
-<section id="comparison">
+<section id="comparison" class="section-light">
   <div class="W">
     <div class="eyebrow rv">比較</div>
     <h2 class="rv">他社ツールとの<br>決定的な違い</h2>
@@ -1777,7 +1902,7 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
 </section>
 
 <!-- ▸ PRICING -->
-<section id="pricing">
+<section id="pricing" class="section-white">
   <div class="W">
     <div class="eyebrow rv">料金</div>
     <h2 class="rv">シンプルな料金体系</h2>
@@ -1814,7 +1939,7 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
 </section>
 
 <!-- ▸ FAQ -->
-<section id="faq">
+<section id="faq" class="section-light">
   <div class="W">
     <div class="eyebrow rv" style="justify-content:center;">FAQ</div>
     <h2 class="rv" style="text-align:center;">よくある質問</h2>
