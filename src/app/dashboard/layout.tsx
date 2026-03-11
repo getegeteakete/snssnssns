@@ -4,11 +4,16 @@ import DashboardSidebar from '@/components/dashboard/Sidebar'
 import DashboardHeader from '@/components/dashboard/Header'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
-
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  let profile = null
+  try {
+    const supabase = createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) redirect('/auth/login')
+    const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    profile = data
+  } catch {
+    redirect('/auth/login')
+  }
 
   return (
     <div className="flex h-screen bg-[#04040a] overflow-hidden">
