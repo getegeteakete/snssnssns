@@ -15,6 +15,14 @@ const nextConfig = {
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/',
+        destination: '/lp.html',
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig

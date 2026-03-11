@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIMO — 売上を作りにいくAI宣伝エージェント</title>
+<meta name="description" content="戦略立案からGoogleマイビジネス自動投稿まで。売上直結の宣伝サイクルをすべて自動化するAIエージェント。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════
+   TOKENS
+══════════════════════════════════════ */
+:root {
+  --bg:     #04040a;
+  --s1:     #0a0a14;
+  --s2:     #0f0f1e;
+  --b1:     #1a1a2e;
+  --b2:     #252540;
+  --txt:    #e8e8f4;
+  --muted:  #6b6b8a;
+  --cyan:   #00d4ff;
+  --cyan2:  #0099cc;
+  --amber:  #ffb800;
+  --amber2: #e09500;
+  --green:  #00e5a0;
+  --purple: #8b5cf6;
+  --red:    #ff4560;
+  --line:   #06c755;
+  --ease:   cubic-bezier(.22,1,.36,1);
+}
+
+/* ══════════════════════════════════════
+   BASE
+══════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg); color:var(--txt);
+  font-family:'Noto Sans JP',sans-serif; font-weight:300;
+  line-height:1.75; overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+
+/* ══════════════════════════════════════
+   KEYFRAMES
+══════════════════════════════════════ */
+@keyframes fadeUp  {from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+@keyframes ticker  {from{transform:translateX(0);}to{transform:translateX(-50%);}}
+@keyframes pulse   {0%,100%{opacity:1;}50%{opacity:.3;}}
+@keyframes float   {0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+@keyframes glow    {0%,100%{box-shadow:0 0 12px rgba(0,212,255,.3);}50%{box-shadow:0 0 28px rgba(0,212,255,.6);}}
+@keyframes spin    {from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes blink   {0%,80%,100%{opacity:1;}40%{opacity:0;}}
+@keyframes slideUp {from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+/* ══════════════════════════════════════
+   REVEAL
+══════════════════════════════════════ */
+.rv{opacity:0;transform:translateY(22px);transition:opacity .8s var(--ease),transform .8s var(--ease);}
+.rv.in{opacity:1;transform:translateY(0);}
+
+/* ══════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════ */
+.W{max-width:1080px;margin:0 auto;padding:0 32px;}
+section{padding:120px 0;}
+
+/* ══════════════════════════════════════
+   TYPE
+══════════════════════════════════════ */
+.eyebrow{
+  font-weight:500;font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--cyan);display:flex;align-items:center;gap:10px;margin-bottom:18px;
+}
+.eyebrow::before{content:'';width:24px;height:1px;background:var(--cyan);opacity:.5;flex-shrink:0;}
+
+/* NO SERIF — bold sans only */
+h1,h2,h3{font-family:'Syne','Noto Sans JP',sans-serif;font-weight:800;letter-spacing:-.02em;line-height:1.05;}
+h1{font-size:clamp(48px,6.5vw,88px);}
+h1 .accent{color:var(--cyan);}
+h1 .accent-red{color:var(--amber);}
+h2{font-size:clamp(32px,4vw,54px);line-height:1.1;}
+h3{font-size:18px;font-weight:700;font-family:'Noto Sans JP',sans-serif;}
+.sub{font-size:16px;color:var(--muted);line-height:1.9;font-weight:300;max-width:520px;margin-top:16px;}
+
+/* ══════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════ */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:500;
+  letter-spacing:.04em;border-radius:100px;text-decoration:none;
+  border:none;cursor:pointer;transition:all .3s var(--ease);white-space:nowrap;
+}
+.btn-cyan{background:var(--cyan);color:var(--bg);padding:14px 32px;}
+.btn-cyan:hover{background:#00bfe6;box-shadow:0 0 32px rgba(0,212,255,.35);transform:translateY(-2px);}
+.btn-amber{background:var(--amber);color:var(--bg);padding:14px 32px;}
+.btn-amber:hover{background:var(--amber2);box-shadow:0 0 32px rgba(255,184,0,.3);transform:translateY(-2px);}
+.btn-ghost{background:transparent;color:var(--txt);padding:13px 28px;border:1px solid var(--b2);}
+.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan);}
+.btn-red{background:var(--red);color:#fff;padding:14px 32px;}
+.btn-red:hover{background:#e03050;transform:translateY(-2px);}
+
+/* ══════════════════════════════════════
+   NAV
+══════════════════════════════════════ */
+nav{
+  position:fixed;top:0;inset-inline:0;z-index:999;
+  height:60px;display:flex;align-items:center;
+  transition:background .4s,box-shadow .4s;
+}
+nav.on{
+  background:rgba(4,4,10,.88);
+  backdrop-filter:blur(20px) saturate(1.4);
+  -webkit-backdrop-filter:blur(20px) saturate(1.4);
+  box-shadow:0 1px 0 var(--b1);
+}
+.nav-i{display:flex;align-items:center;justify-content:space-between;}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.logo-box{
+  width:32px;height:32px;background:var(--cyan);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+}
+.logo-box svg{width:16px;height:16px;}
+.logo-txt{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--txt);letter-spacing:-.04em;}
+.navlinks{display:flex;gap:28px;}
+.navlinks a{font-size:12px;font-weight:400;color:var(--muted);text-decoration:none;transition:color .2s;letter-spacing:.04em;}
+.navlinks a:hover{color:var(--txt);}
+.nav-cta{font-size:12px;font-weight:500;letter-spacing:.04em;background:var(--cyan);color:var(--bg);padding:8px 20px;border-radius:100px;text-decoration:none;transition:all .2s;}
+.nav-cta:hover{background:var(--amber);color:var(--bg);}
+
+/* ══════════════════════════════════════
+   HERO
+══════════════════════════════════════ */
+#hero{
+  min-height:100svh;display:flex;align-items:center;
+  padding-top:60px;background:var(--bg);position:relative;overflow:hidden;
+}
+/* grid bg */
+.hero-bg{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(0,212,255,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,212,255,.04) 1px,transparent 1px);
+  background-size:80px 80px;
+}
+.hero-bg::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 60% at 70% 50%,rgba(0,212,255,.06),transparent);
+}
+.hero-grid{display:grid;grid-template-columns:1fr 1.05fr;gap:80px;align-items:center;position:relative;z-index:1;}
+.hero-kicker{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--cyan);background:rgba(0,212,255,.08);
+  padding:6px 16px;border-radius:100px;margin-bottom:28px;
+  border:1px solid rgba(0,212,255,.18);
+}
+.hk-dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite;}
+.hero-desc{font-size:17px;color:var(--muted);line-height:1.85;max-width:420px;margin:24px 0 36px;font-weight:300;}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px;}
+.hero-trust{display:flex;gap:20px;flex-wrap:wrap;}
+.hero-trust span{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px;}
+.hero-trust span::before{content:'';width:12px;height:1px;background:var(--cyan);opacity:.5;}
+
+/* Dashboard card */
+.dash-card{
+  background:var(--s1);border:1px solid var(--b1);border-radius:18px;overflow:hidden;
+  box-shadow:0 4px 6px rgba(0,0,0,.2),0 24px 80px rgba(0,0,0,.4);
+  animation:float 7s ease-in-out infinite;
+}
+.dc-bar{background:var(--s2);border-bottom:1px solid var(--b1);height:42px;display:flex;align-items:center;padding:0 16px;gap:7px;}
+.dc-dot{width:10px;height:10px;border-radius:50%;}
+.dc-title{font-size:11px;color:var(--muted);margin:0 auto;letter-spacing:.08em;}
+.dc-body{padding:20px;}
+.dc-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.dc-m{background:var(--s2);border-radius:10px;padding:14px 12px;border:1px solid var(--b1);}
+.dc-mval{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--txt);display:block;}
+.dc-mlab{font-size:10px;color:var(--muted);margin-top:3px;}
+.dc-mup{font-size:10px;color:var(--cyan);font-weight:500;margin-top:3px;}
+.dc-chart{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:13px;margin-bottom:13px;}
+.dc-clabel{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;font-weight:500;}
+.dc-alert{background:rgba(255,69,96,.06);border-left:2.5px solid var(--red);border-radius:0 10px 10px 0;padding:12px 14px;}
+.dc-atag{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:4px;}
+.dc-abody{font-size:11px;color:var(--muted);line-height:1.65;margin-bottom:9px;}
+.dc-abtns{display:flex;gap:7px;}
+.dc-abtn{font-size:10px;font-weight:600;padding:5px 13px;border-radius:100px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .2s;}
+.dc-ok{background:var(--cyan);color:var(--bg);border:none;}
+.dc-ok:hover{background:var(--amber);}
+.dc-hold{background:transparent;color:var(--muted);border:1px solid var(--b2);}
+
+/* ══════════════════════════════════════
+   TICKER
+══════════════════════════════════════ */
+.ticker{background:var(--s1);border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);padding:14px 0;overflow:hidden;white-space:nowrap;}
+.ticker-track{display:inline-flex;animation:ticker 40s linear infinite;}
+.ti{font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;padding:0 40px;font-weight:400;}
+.td{color:var(--cyan);font-size:7px;align-self:center;}
+
+/* ══════════════════════════════════════
+   ICON (single-stroke SVG)
+══════════════════════════════════════ */
+.ico svg{display:block;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ══════════════════════════════════════
+   PROBLEM
+══════════════════════════════════════ */
+#problem{background:var(--bg);}
+.prob-grid{display:grid;grid-template-columns:repeat(3,1fr);margin-top:72px;border:1px solid var(--b1);border-radius:20px;overflow:hidden;}
+.prob-cell{padding:40px 34px;border-right:1px solid var(--b1);border-bottom:1px solid var(--b1);transition:background .25s;}
+.prob-cell:nth-child(3n){border-right:none;}
+.prob-cell:nth-child(n+4){border-bottom:none;}
+.prob-cell:hover{background:var(--s2);}
+.prob-cell:hover .ico svg{stroke:var(--cyan);}
+.prob-no{font-size:10px;color:var(--b2);letter-spacing:.2em;font-weight:500;margin-bottom:20px;}
+.prob-h{font-family:'Noto Sans JP',sans-serif;font-size:15px;font-weight:700;margin:16px 0 10px;color:var(--txt);line-height:1.45;}
+.prob-p{font-size:13px;color:var(--muted);line-height:1.85;font-weight:300;}
+
+/* ══════════════════════════════════════
+   SOLUTION
+══════════════════════════════════════ */
+#solution{background:var(--s1);}
+.flow{display:grid;grid-template-columns:repeat(7,1fr);margin-top:72px;position:relative;}
+.flow::after{content:'';position:absolute;top:26px;left:3%;right:3%;height:1px;background:var(--b1);}
+.fnode{text-align:center;position:relative;z-index:1;padding:0 6px;}
+.fbub{
+  width:52px;height:52px;border-radius:50%;margin:0 auto 14px;
+  background:var(--s2);border:1px solid var(--b1);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .3s var(--ease);
+}
+.fbub:hover{border-color:var(--cyan);transform:scale(1.1);animation:glow 1.5s infinite;}
+.fnode.last .fbub{background:var(--cyan);border-color:var(--cyan);}
+.fnode.last .fbub .ico svg{stroke:var(--bg);}
+.flbl{font-size:11px;font-weight:700;color:var(--txt);margin-bottom:3px;font-family:'Noto Sans JP',sans-serif;}
+.fsub{font-size:10px;color:var(--muted);line-height:1.55;}
+
+/* ══════════════════════════════════════
+   FEATURES
+══════════════════════════════════════ */
+#features{background:var(--bg);}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);margin-top:72px;border:1px solid var(--b1);border-radius:20px;overflow:hidden;}
+.fc{padding:44px 36px;border-right:1px solid var(--b1);border-bottom:1px solid var(--b1);transition:background .25s;position:relative;}
+.fc:nth-child(3n){border-right:none;}
+.fc:nth-child(n+10):not(.fw){border-bottom:none;}
+.fc:hover{background:var(--s2);}
+.fc:hover .ico svg{stroke:var(--cyan);}
+.fw{grid-column:span 3;border-right:none;border-bottom:none;background:linear-gradient(135deg,rgba(0,212,255,.04),rgba(255,184,0,.03));}
+.fw:hover{background:linear-gradient(135deg,rgba(0,212,255,.07),rgba(255,184,0,.05));}
+.fc-no{font-size:10px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;font-weight:500;margin-bottom:20px;}
+.fc-h{font-family:'Noto Sans JP',sans-serif;font-size:16px;font-weight:700;margin:16px 0 10px;color:var(--txt);line-height:1.4;}
+.fc-p{font-size:13px;color:var(--muted);line-height:1.85;font-weight:300;}
+.fc-badge{
+  display:inline-block;margin-top:18px;
+  font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 12px;border-radius:100px;
+  background:rgba(0,212,255,.1);color:var(--cyan);border:1px solid rgba(0,212,255,.2);
+}
+
+/* ══════════════════════════════════════
+   STATS
+══════════════════════════════════════ */
+#stats{background:var(--s1);}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--b1);border-radius:20px;overflow:hidden;margin-top:72px;}
+.sb{padding:48px 32px;border-right:1px solid var(--b1);}
+.sb:last-child{border-right:none;}
+.sn{font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:var(--cyan);letter-spacing:-.04em;display:block;margin-bottom:10px;line-height:1;}
+.sl{font-size:13px;color:var(--muted);font-weight:300;}
+.ss{font-size:11px;color:var(--b2);margin-top:5px;}
+
+/* ══════════════════════════════════════
+   AGENTS
+══════════════════════════════════════ */
+#agents{background:var(--bg);}
+.agents-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:72px;}
+.ac{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:26px 16px 22px;text-align:center;transition:all .3s var(--ease);}
+.ac:hover{transform:translateY(-5px);box-shadow:0 20px 60px rgba(0,0,0,.3);border-color:var(--b2);}
+.ac:hover .ac-ring{border-color:var(--cyan);}
+.ac:hover .ac-ring .ico svg{stroke:var(--cyan);}
+.ac-ring{width:52px;height:52px;border-radius:50%;border:1px solid var(--b1);background:var(--s2);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;transition:all .2s;}
+.ac-id{font-size:9px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;margin-bottom:6px;font-weight:500;}
+.ac-name{font-size:13px;font-weight:700;margin-bottom:6px;font-family:'Noto Sans JP',sans-serif;color:var(--txt);}
+.ac-desc{font-size:11px;color:var(--muted);line-height:1.7;}
+.ac-live{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--cyan);margin-top:10px;font-weight:500;}
+.ac-live::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite;flex-shrink:0;}
+
+/* ══════════════════════════════════════
+   LINE
+══════════════════════════════════════ */
+#line-sec{background:var(--s1);}
+.line-layout{display:grid;grid-template-columns:1fr 1fr;gap:100px;align-items:center;margin-top:72px;}
+.phone{max-width:272px;margin:0 auto;background:var(--bg);border-radius:48px;padding:14px;box-shadow:0 60px 120px rgba(0,0,0,.5);}
+.phone-notch{height:20px;background:rgba(255,255,255,.06);border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:center;margin-bottom:2px;}
+.phone-cam{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.12);}
+.phone-screen{background:#e5e0d8;border-radius:32px;overflow:hidden;}
+.ltopbar{background:#4cae4f;padding:12px 14px;display:flex;align-items:center;gap:8px;}
+.ltopbar .ico svg{stroke:white;}
+.ltop-name{font-size:12px;font-weight:700;color:white;}
+.msgs{background:#dae0d2;padding:12px;min-height:240px;display:flex;flex-direction:column;gap:9px;}
+.mai{align-self:flex-start;max-width:85%;}
+.mme{align-self:flex-end;max-width:65%;}
+.bbl{border-radius:4px 16px 16px 16px;padding:9px 12px;font-size:11px;line-height:1.65;}
+.bai{background:white;color:#333;box-shadow:0 1px 2px rgba(0,0,0,.08);}
+.bme{background:#4cae4f;color:white;border-radius:16px 4px 16px 16px;font-size:12px;font-weight:600;}
+.bwarn{background:white;border-left:2px solid #e53;border-radius:0 16px 16px 0;color:#333;}
+.mtime{font-size:9px;color:#999;margin-top:2px;padding:0 2px;}
+.mtime.r{text-align:right;}
+.lf-list{display:flex;flex-direction:column;}
+.lf-row{display:flex;gap:18px;padding:24px 0;border-bottom:1px solid var(--b1);}
+.lf-row:last-child{border-bottom:none;}
+.lf-ico{width:40px;height:40px;border:1px solid var(--b1);border-radius:10px;background:var(--s2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.lf-row:hover .lf-ico{border-color:var(--cyan);background:rgba(0,212,255,.08);}
+.lf-row:hover .lf-ico .ico svg{stroke:var(--cyan);}
+.lf-h{font-size:14px;font-weight:700;margin-bottom:4px;font-family:'Noto Sans JP',sans-serif;color:var(--txt);}
+.lf-p{font-size:13px;color:var(--muted);line-height:1.8;font-weight:300;}
+
+/* ══════════════════════════════════════
+   GMB
+══════════════════════════════════════ */
+#gmb{background:var(--bg);}
+.gmb-layout{display:grid;grid-template-columns:1fr 1fr;gap:100px;align-items:start;margin-top:72px;}
+.gmb-shell{background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,.1),0 24px 80px rgba(0,0,0,.3);}
+.gbar{background:#f8f9fa;padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #e8eaed;}
+.glogo{font-weight:700;font-size:16px;letter-spacing:-1px;display:flex;}
+.gB{color:#4285f4;}.gR{color:#ea4335;}.gY{color:#fbbc05;}.gG{color:#34a853;}
+.gsearch{flex:1;background:white;border:1px solid #dfe1e5;border-radius:100px;padding:5px 12px;font-size:11px;color:#9aa0a6;font-family:'Noto Sans JP',sans-serif;}
+.gmap{height:108px;background:linear-gradient(155deg,#d4e8d4,#c8dff0 60%,#e8e4d4);display:flex;align-items:center;justify-content:center;}
+.gpin{animation:float 4s ease-in-out infinite;}
+.ginfo{padding:14px 16px;}
+.gbiz{font-weight:700;font-size:15px;color:#202124;margin-bottom:2px;font-family:'Noto Sans JP',sans-serif;}
+.gcat{font-size:11px;color:#70757a;margin-bottom:8px;}
+.gstars{display:flex;align-items:center;gap:5px;margin-bottom:11px;}
+.gsrow{color:#fbbc04;font-size:12px;letter-spacing:1px;}
+.gacts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;}
+.gact{text-align:center;padding:8px 4px;border:1px solid #dadce0;border-radius:8px;font-size:10px;color:#4285f4;font-weight:600;}
+.gposts-hd{font-size:11px;font-weight:700;color:#202124;padding-top:10px;border-top:1px solid #f1f3f4;margin-bottom:9px;}
+.gpost{background:#f8f9fa;border-radius:8px;padding:10px 12px;margin-bottom:7px;}
+.gbadge{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;margin-bottom:5px;}
+.bg{color:#34a853;background:rgba(52,168,83,.1);}.br{color:#ea4335;background:rgba(234,67,53,.1);}.bb{color:#4285f4;background:rgba(66,133,244,.1);}
+.gtxt{font-size:11px;color:#3c4043;line-height:1.6;margin-bottom:3px;}
+.gdate{font-size:9px;color:#9aa0a6;}
+.gauto{margin:0 16px 13px;background:rgba(66,133,244,.05);border:1px solid rgba(66,133,244,.15);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:8px;}
+.gadot{width:6px;height:6px;border-radius:50%;background:#34a853;animation:pulse 1.5s infinite;flex-shrink:0;}
+.gatxt{font-size:10px;color:#70757a;line-height:1.4;}
+/* GMB feature list */
+.gf-list{display:flex;flex-direction:column;}
+.gf-row{display:flex;gap:18px;padding:22px 0;border-bottom:1px solid var(--b1);}
+.gf-row:last-of-type{border-bottom:none;}
+.gf-ico{width:40px;height:40px;border:1px solid var(--b1);border-radius:10px;background:var(--s1);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.gf-row:hover .gf-ico{border-color:var(--cyan);}
+.gf-row:hover .gf-ico .ico svg{stroke:var(--cyan);}
+.gf-h{font-size:14px;font-weight:700;margin-bottom:4px;font-family:'Noto Sans JP',sans-serif;color:var(--txt);}
+.gf-p{font-size:13px;color:var(--muted);line-height:1.8;font-weight:300;}
+.gwhy{background:rgba(255,69,96,.05);border:1px solid rgba(255,69,96,.15);border-radius:12px;padding:16px 18px;margin-bottom:24px;}
+.gwhy-cap{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:5px;}
+.gwhy-p{font-size:13px;color:var(--muted);line-height:1.8;font-weight:300;}
+.gwhy-p strong{color:var(--txt);font-weight:500;}
+.gtypes{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:20px 0;}
+.gtype{background:var(--s1);border:1px solid var(--b1);border-radius:12px;padding:14px 8px;text-align:center;transition:border-color .2s;}
+.gtype:hover{border-color:var(--cyan);}
+.gtype .ico{margin:0 auto 7px;}
+.gtype-h{font-size:11px;font-weight:600;color:var(--txt);}
+.gtype-s{font-size:10px;color:var(--muted);margin-top:2px;}
+.gbiz-tags{display:flex;flex-wrap:wrap;gap:7px;padding-top:20px;border-top:1px solid var(--b1);}
+.gbiz-tag{font-size:11px;color:var(--muted);background:var(--s1);border:1px solid var(--b1);border-radius:100px;padding:5px 14px;}
+
+/* ══════════════════════════════════════
+   COMPARISON
+══════════════════════════════════════ */
+#comparison{background:var(--s1);}
+.comp{margin-top:72px;border:1px solid var(--b1);border-radius:20px;overflow:hidden;}
+.c-head{display:grid;grid-template-columns:2.4fr 1fr 1fr 1.3fr;background:var(--s2);}
+.chcell{padding:16px 22px;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.chcell.hi{color:var(--cyan);}
+.c-row{display:grid;grid-template-columns:2.4fr 1fr 1fr 1.3fr;border-top:1px solid var(--b1);transition:background .15s;}
+.c-row:hover{background:var(--s2);}
+.ccell{padding:13px 22px;font-size:13px;color:var(--muted);display:flex;align-items:center;}
+.ccell:first-child{color:var(--txt);font-weight:400;}
+.cyes{color:var(--green);}
+.cno{color:var(--b2);}
+.chi{color:var(--cyan);font-weight:500;}
+
+/* ══════════════════════════════════════
+   PRICING
+══════════════════════════════════════ */
+#pricing{background:var(--bg);}
+.price-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:72px;}
+.pc{background:var(--s1);border:1px solid var(--b1);border-radius:18px;padding:34px 26px;transition:all .3s var(--ease);position:relative;}
+.pc:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.pc.pop{border-color:var(--cyan);background:linear-gradient(160deg,rgba(0,212,255,.06),var(--s1));}
+.pop-tag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--amber);color:var(--bg);font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 18px;border-radius:100px;white-space:nowrap;}
+.pname{font-size:10px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;margin-bottom:16px;font-weight:500;}
+.pamt{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;color:var(--txt);display:flex;align-items:baseline;gap:3px;line-height:1;}
+.pc.pop .pamt{color:var(--cyan);}
+.punit{font-size:13px;color:var(--muted);font-family:'Noto Sans JP',sans-serif;font-weight:300;}
+.pdesc{font-size:12px;color:var(--muted);margin:14px 0 18px;padding-bottom:18px;border-bottom:1px solid var(--b1);line-height:1.8;font-weight:300;}
+.pfeat{font-size:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:8px;align-items:flex-start;color:var(--txt);line-height:1.5;}
+.pf-off{color:var(--b2);}
+.pbtn{display:block;text-align:center;margin-top:24px;padding:12px;border-radius:100px;font-size:13px;font-weight:500;text-decoration:none;letter-spacing:.03em;transition:all .2s;font-family:'Noto Sans JP',sans-serif;}
+.pbo{border:1px solid var(--b2);color:var(--muted);}
+.pbo:hover{border-color:var(--cyan);color:var(--cyan);}
+.pbs{background:var(--amber);color:var(--bg);border:none;}
+.pbs:hover{background:var(--cyan);}
+.pts-box{margin-top:32px;background:var(--s1);border:1px solid var(--b1);border-radius:18px;padding:34px;}
+.pts-title{font-family:'Noto Sans JP',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;color:var(--txt);}
+.pts-sub{font-size:13px;color:var(--muted);margin-bottom:22px;font-weight:300;}
+.pts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.ptc{background:var(--s2);border:1px solid var(--b1);border-radius:14px;padding:20px;text-align:center;transition:border-color .2s;}
+.ptc:hover{border-color:var(--cyan);}
+.ptc.mid{border-color:var(--amber);}
+.ptn{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--txt);}
+.ptp{font-family:'Syne',sans-serif;font-size:20px;color:var(--amber);margin:4px 0;font-weight:800;}
+.pts{font-size:11px;color:var(--muted);}
+
+/* ══════════════════════════════════════
+   AFFILIATE — dual system
+══════════════════════════════════════ */
+#affiliate{background:var(--s1);}
+.aff-tabs{display:flex;gap:0;margin-bottom:48px;border:1px solid var(--b1);border-radius:12px;overflow:hidden;width:fit-content;}
+.aff-tab{font-size:13px;font-weight:500;padding:12px 28px;cursor:pointer;transition:all .2s;border:none;font-family:'Noto Sans JP',sans-serif;letter-spacing:.02em;}
+.aff-tab.active{background:var(--cyan);color:var(--bg);}
+.aff-tab:not(.active){background:var(--s2);color:var(--muted);}
+.aff-tab:not(.active):hover{color:var(--txt);}
+.aff-panel{display:none;}
+.aff-panel.active{display:grid;}
+/* Panel A — promote AIMO */
+.aff-a-grid{grid-template-columns:1fr 1fr;gap:80px;align-items:start;}
+.aff-steps{display:flex;flex-direction:column;}
+.aff-step{display:flex;gap:18px;padding-bottom:28px;position:relative;}
+.aff-step::before{content:'';position:absolute;left:19px;top:42px;bottom:0;width:1px;background:var(--b1);}
+.aff-step:last-child::before{display:none;}
+.aff-n{width:40px;height:40px;border-radius:50%;border:1px solid var(--b1);background:var(--s2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--txt);flex-shrink:0;transition:all .2s;}
+.aff-step:hover .aff-n{background:var(--cyan);color:var(--bg);border-color:var(--cyan);}
+.aff-sh{font-size:15px;font-weight:700;margin-bottom:4px;font-family:'Noto Sans JP',sans-serif;color:var(--txt);}
+.aff-sp{font-size:13px;color:var(--muted);line-height:1.8;font-weight:300;}
+.reward-box{background:var(--s2);border:1px solid var(--b1);border-radius:18px;padding:28px;}
+.rw-title{font-family:'Noto Sans JP',sans-serif;font-size:16px;font-weight:700;margin-bottom:18px;color:var(--txt);}
+.rw-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--b1);}
+.rw-row:last-of-type{border-bottom:none;}
+.rw-l{font-size:13px;color:var(--muted);font-weight:300;}
+.rw-v{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--amber);}
+.lp-box{margin-top:18px;background:linear-gradient(135deg,rgba(255,184,0,.08),rgba(0,212,255,.05));border:1px solid rgba(255,184,0,.25);border-radius:14px;padding:20px;}
+.lp-box-price{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--amber);}
+/* Panel B — EC affiliate manager */
+.aff-b-grid{grid-template-columns:1fr 1fr;gap:60px;align-items:start;}
+.ec-feature-list{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.ecf{background:var(--s2);border:1px solid var(--b1);border-radius:14px;padding:22px 20px;transition:all .3s;}
+.ecf:hover{border-color:var(--amber);background:rgba(255,184,0,.04);}
+.ecf:hover .ico svg{stroke:var(--amber);}
+.ecf-h{font-size:13px;font-weight:700;margin:12px 0 6px;font-family:'Noto Sans JP',sans-serif;color:var(--txt);}
+.ecf-p{font-size:12px;color:var(--muted);line-height:1.75;font-weight:300;}
+.ec-flow{background:var(--s2);border:1px solid var(--b1);border-radius:18px;padding:28px;}
+.ec-flow-title{font-size:14px;font-weight:700;margin-bottom:18px;font-family:'Noto Sans JP',sans-serif;color:var(--txt);display:flex;align-items:center;gap:8px;}
+.ecf-step{display:flex;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:1px solid var(--b1);}
+.ecf-step:last-child{border-bottom:none;}
+.ecf-num{width:26px;height:26px;border-radius:50%;background:rgba(255,184,0,.15);border:1px solid rgba(255,184,0,.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--amber);flex-shrink:0;}
+.ecf-txt{font-size:12px;color:var(--muted);line-height:1.75;font-weight:300;}
+.ecf-txt strong{color:var(--txt);font-weight:500;}
+.plan-note{margin-top:18px;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:14px 16px;font-size:12px;color:var(--muted);line-height:1.75;font-weight:300;}
+.plan-note strong{color:var(--purple);font-weight:500;}
+
+/* ══════════════════════════════════════
+   TESTIMONIALS
+══════════════════════════════════════ */
+#testi{background:var(--bg);}
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:72px;}
+.tc{
+  background:var(--b1);
+  border:1px solid var(--b2);
+  border-radius:18px;padding:32px;transition:all .3s;
+  display:flex;flex-direction:column;gap:0;
+}
+.tc:hover{border-color:var(--cyan);transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.45);}
+.tc-stars{color:var(--amber);font-size:15px;letter-spacing:3px;margin-bottom:16px;}
+.tc-quote{
+  font-size:15px;color:#c8c8e0;
+  line-height:1.9;margin-bottom:24px;
+  font-weight:400;flex:1;
+  border-left:2px solid var(--cyan);
+  padding-left:14px;
+}
+.tc-author{display:flex;align-items:center;gap:14px;padding-top:20px;border-top:1px solid var(--b2);}
+.tc-av{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.35);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--cyan);
+  flex-shrink:0;
+}
+.tc-name{font-size:14px;font-weight:700;color:#e8e8f4;font-family:'Noto Sans JP',sans-serif;margin-bottom:3px;}
+.tc-role{font-size:12px;color:#8888aa;}
+
+/* ══════════════════════════════════════
+   FAQ
+══════════════════════════════════════ */
+#faq{background:var(--s1);}
+.faq-wrap{max-width:680px;margin:72px auto 0;}
+.faq-item{border-bottom:1px solid var(--b1);}
+.faq-q{width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:20px 0;display:flex;justify-content:space-between;align-items:center;color:var(--txt);font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;gap:20px;}
+.faq-q-ico{width:28px;height:28px;border-radius:50%;border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.faq-q-ico svg{width:12px;height:12px;stroke:var(--muted);stroke-width:1.5;stroke-linecap:round;fill:none;transition:transform .3s var(--ease);}
+.faq-item.open .faq-q-ico{background:var(--cyan);border-color:var(--cyan);}
+.faq-item.open .faq-q-ico svg{transform:rotate(45deg);stroke:var(--bg);}
+.faq-a{font-size:13px;color:var(--muted);line-height:1.9;font-weight:300;max-height:0;overflow:hidden;transition:max-height .4s var(--ease),padding .4s;}
+.faq-item.open .faq-a{max-height:220px;padding-bottom:20px;}
+
+/* ══════════════════════════════════════
+   FINAL CTA
+══════════════════════════════════════ */
+#cta{background:var(--s2);text-align:center;padding:140px 0;position:relative;overflow:hidden;border-top:1px solid var(--b1);}
+.cta-dec{position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:.06;}
+.cta-dec svg{width:100%;height:100%;}
+.cta-h{font-family:'Syne',sans-serif;font-size:clamp(40px,6vw,80px);font-weight:800;color:var(--txt);letter-spacing:-.04em;line-height:1.04;margin-bottom:18px;position:relative;}
+.cta-h span{color:var(--amber);}
+.cta-sub{font-size:17px;color:var(--muted);position:relative;margin-bottom:44px;font-weight:300;}
+.cta-btns{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;position:relative;}
+.cta-trust{font-size:12px;color:var(--b2);margin-top:24px;position:relative;display:flex;justify-content:center;gap:24px;}
+.cta-trust span::before{content:'✓ ';color:var(--cyan);}
+
+/* ══════════════════════════════════════
+   FOOTER
+══════════════════════════════════════ */
+footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px;}
+.footer-brand-desc{font-size:13px;color:var(--muted);margin-top:12px;line-height:1.8;max-width:240px;font-weight:300;}
+.fc-col h4{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;font-weight:500;}
+.fc-col a{display:block;font-size:13px;color:var(--muted);text-decoration:none;margin-bottom:9px;transition:color .2s;font-weight:300;}
+.fc-col a:hover{color:var(--txt);}
+.footer-bottom{border-top:1px solid var(--b1);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.footer-bottom p{font-size:11px;color:var(--muted);}
+
+/* ══════════════════════════════════════
+   PAGE-TOP BUTTON
+══════════════════════════════════════ */
+#pagetop{
+  position:fixed;bottom:32px;right:32px;z-index:998;
+  width:48px;height:48px;border-radius:50%;
+  background:var(--s2);border:1px solid var(--b2);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;text-decoration:none;
+  opacity:0;pointer-events:none;
+  transition:all .3s var(--ease);
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+}
+#pagetop.show{opacity:1;pointer-events:all;}
+#pagetop:hover{background:var(--cyan);border-color:var(--cyan);transform:translateY(-3px);}
+#pagetop:hover svg{stroke:var(--bg);}
+#pagetop svg{stroke:var(--muted);stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;width:18px;height:18px;transition:stroke .2s;}
+
+/* ══════════════════════════════════════
+   CHATBOT
+══════════════════════════════════════ */
+#chat-fab{
+  position:fixed;bottom:32px;right:88px;z-index:997;
+  width:52px;height:52px;border-radius:50%;
+  background:var(--amber);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:0 4px 24px rgba(255,184,0,.35);
+  border:none;transition:all .3s var(--ease);
+}
+#chat-fab:hover{background:var(--amber2);transform:scale(1.08);}
+#chat-fab svg{width:22px;height:22px;stroke:var(--bg);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+#chat-fab .chat-badge{
+  position:absolute;top:-3px;right:-3px;
+  width:16px;height:16px;border-radius:50%;background:var(--red);
+  font-size:9px;font-weight:700;color:white;display:flex;align-items:center;justify-content:center;
+  border:1.5px solid var(--bg);
+}
+
+/* Chat window */
+#chat-win{
+  position:fixed;bottom:100px;right:32px;z-index:996;
+  width:360px;background:var(--s1);border:1px solid var(--b2);border-radius:20px;
+  box-shadow:0 24px 80px rgba(0,0,0,.6);
+  display:flex;flex-direction:column;overflow:hidden;
+  max-height:520px;
+  transition:all .4s var(--ease);
+  opacity:0;transform:translateY(16px) scale(.97);pointer-events:none;
+}
+#chat-win.open{opacity:1;transform:translateY(0) scale(1);pointer-events:all;}
+.cw-header{
+  background:var(--s2);border-bottom:1px solid var(--b1);
+  padding:14px 18px;display:flex;align-items:center;gap:12px;
+}
+.cw-av{
+  width:36px;height:36px;border-radius:50%;background:var(--amber);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.cw-av svg{width:18px;height:18px;stroke:var(--bg);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.cw-info{flex:1;}
+.cw-name{font-size:13px;font-weight:700;color:var(--txt);font-family:'Noto Sans JP',sans-serif;}
+.cw-status{font-size:11px;color:var(--green);display:flex;align-items:center;gap:5px;}
+.cw-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;flex-shrink:0;}
+.cw-close{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;transition:color .2s;font-size:18px;line-height:1;}
+.cw-close:hover{color:var(--txt);}
+.cw-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:260px;max-height:300px;}
+.cw-msgs::-webkit-scrollbar{width:2px;}
+.cw-msgs::-webkit-scrollbar-thumb{background:var(--b2);}
+.cwm-ai{align-self:flex-start;max-width:85%;}
+.cwm-me{align-self:flex-end;max-width:75%;}
+.cwm-bbl{border-radius:4px 14px 14px 14px;padding:10px 13px;font-size:12px;line-height:1.7;}
+.cwm-bai{background:var(--s2);border:1px solid var(--b1);color:var(--txt);}
+.cwm-bme{background:var(--amber);color:var(--bg);border-radius:14px 4px 14px 14px;font-weight:500;}
+.cw-typing{display:flex;align-items:center;gap:4px;padding:8px 0;}
+.cw-typing span{width:6px;height:6px;border-radius:50%;background:var(--muted);}
+.cw-typing span:nth-child(1){animation:blink 1.4s .0s infinite;}
+.cw-typing span:nth-child(2){animation:blink 1.4s .2s infinite;}
+.cw-typing span:nth-child(3){animation:blink 1.4s .4s infinite;}
+/* Quick replies */
+.cw-quick{padding:10px 16px;display:flex;flex-wrap:wrap;gap:7px;border-top:1px solid var(--b1);}
+.cw-qbtn{font-size:11px;color:var(--cyan);border:1px solid rgba(0,212,255,.25);background:rgba(0,212,255,.06);border-radius:100px;padding:5px 13px;cursor:pointer;transition:all .2s;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;}
+.cw-qbtn:hover{background:rgba(0,212,255,.15);border-color:var(--cyan);}
+.cw-input-row{padding:12px 16px;border-top:1px solid var(--b1);display:flex;gap:8px;align-items:center;}
+.cw-input{
+  flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:100px;
+  padding:9px 16px;font-size:13px;color:var(--txt);font-family:'Noto Sans JP',sans-serif;
+  outline:none;transition:border-color .2s;
+}
+.cw-input:focus{border-color:var(--cyan);}
+.cw-input::placeholder{color:var(--muted);}
+.cw-send{width:36px;height:36px;border-radius:50%;background:var(--amber);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.cw-send:hover{background:var(--cyan);}
+.cw-send svg{width:15px;height:15px;stroke:var(--bg);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+@media(max-width:960px){
+  .hero-grid,.line-layout,.gmb-layout,.aff-a-grid,.aff-b-grid{grid-template-columns:1fr;}
+  .prob-grid,.feat-grid{grid-template-columns:1fr 1fr;}
+  .fw{grid-column:span 2;}
+  .agents-row{grid-template-columns:repeat(3,1fr);}
+  .price-grid{grid-template-columns:1fr 1fr;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .testi-grid{grid-template-columns:1fr;}
+  .footer-grid{grid-template-columns:1fr 1fr;}
+  .flow{grid-template-columns:repeat(4,1fr);}
+  .navlinks{display:none;}
+  .comp{overflow-x:auto;}
+}
+@media(max-width:600px){
+  section{padding:80px 0;}
+  .W{padding:0 20px;}
+  .prob-grid,.feat-grid,.agents-row,.price-grid,.stats-row,.pts-grid,.testi-grid,.ec-feature-list{grid-template-columns:1fr;}
+  .fw{grid-column:span 1;}
+  .flow{grid-template-columns:repeat(2,1fr);}
+  .footer-grid{grid-template-columns:1fr;}
+  #chat-win{width:calc(100vw - 48px);right:24px;}
+  #chat-fab{right:24px;}
+  #pagetop{right:24px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ▸ NAV -->
+<nav id="nav">
+  <div class="W nav-i">
+    <a href="#" class="logo">
+      <div class="logo-box">
+        <svg viewBox="0 0 16 16" fill="none" stroke="#04040a" stroke-width="1.6" stroke-linecap="round">
+          <path d="M2 13 L8 3 L14 13 M5 9.5 L11 9.5"/>
+        </svg>
+      </div>
+      <span class="logo-txt">AIMO</span>
+    </a>
+    <div class="navlinks">
+      <a href="#features">機能</a>
+      <a href="#sns-auto">SNS自動化</a>
+      <a href="#gmb">GMB</a>
+      <a href="#affiliate">アフィリエイト</a>
+      <a href="#pricing">料金</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a href="#pricing" class="nav-cta">無料で試す</a>
+  </div>
+</nav>
+
+<!-- ▸ HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="W hero-grid">
+    <div>
+      <div class="hero-kicker"><span class="hk-dot"></span>AI 宣伝エージェント — 2025</div>
+      <h1 style="animation:fadeUp .9s both">投稿するAIは、<br><span class="accent">もう古い。</span></h1>
+      <p class="hero-desc" style="animation:fadeUp .9s .16s both">戦略を立て、数字を読み、売上を作りにいく。AIMOは7つのステップを自律的に回し続けます。</p>
+      <div class="hero-actions" style="animation:fadeUp .9s .3s both">
+        <a href="#pricing" class="btn btn-amber">30トークン無料で試す →</a>
+        <a href="#features" class="btn btn-ghost">機能を見る</a>
+      </div>
+      <div class="hero-trust" style="animation:fadeUp .9s .42s both">
+        <span>クレカ不要</span>
+        <span>最短5分でスタート</span>
+        <span>いつでも解約可</span>
+      </div>
+    </div>
+
+    <!-- Dashboard mock -->
+    <div style="animation:fadeUp .9s .22s both">
+      <div class="dash-card">
+        <div class="dc-bar">
+          <div class="dc-dot" style="background:#ff5f57"></div>
+          <div class="dc-dot" style="background:#febc2e"></div>
+          <div class="dc-dot" style="background:#28c840"></div>
+          <span class="dc-title">AIMO Dashboard</span>
+        </div>
+        <div class="dc-body">
+          <div class="dc-metrics">
+            <div class="dc-m"><span class="dc-mval">107</span><div class="dc-mlab">今月CV数</div><div class="dc-mup">▲ +34%</div></div>
+            <div class="dc-m"><span class="dc-mval">4.3%</span><div class="dc-mlab">平均CVR</div><div class="dc-mup">▲ +0.8pt</div></div>
+            <div class="dc-m"><span class="dc-mval">23</span><div class="dc-mlab">AI提案数</div><div class="dc-mup" style="color:var(--red)">承認待ち 3</div></div>
+          </div>
+          <div class="dc-chart">
+            <div class="dc-clabel">CV数 推移（14日）</div>
+            <svg width="100%" height="44" viewBox="0 0 280 44" preserveAspectRatio="none">
+              <defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00d4ff" stop-opacity=".18"/><stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,40 C20,36 30,32 50,26 C70,20 80,30 100,18 C120,6 140,14 160,8 C180,2 200,10 220,6 C240,2 260,4 280,2 L280,44 L0,44Z" fill="url(#cg)"/>
+              <path d="M0,40 C20,36 30,32 50,26 C70,20 80,30 100,18 C120,6 140,14 160,8 C180,2 200,10 220,6 C240,2 260,4 280,2" fill="none" stroke="var(--cyan)" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="dc-alert">
+            <div class="dc-atag">AI 改善提案</div>
+            <div class="dc-abody">Instagram保存率が高くCV低い。「診断導線」切替でCVR+1.8%見込み。</div>
+            <div class="dc-abtns">
+              <button class="dc-abtn dc-ok">承認</button>
+              <button class="dc-abtn dc-hold">保留</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ TICKER -->
+<div class="ticker">
+  <div class="ticker-track">
+    <span class="ti">戦略立案 AI</span><span class="td">◆</span>
+    <span class="ti">SNS 自動投稿</span><span class="td">◆</span>
+    <span class="ti">コンテンツ自動生成</span><span class="td">◆</span>
+    <span class="ti">CVR 改善提案</span><span class="td">◆</span>
+    <span class="ti">LINE 承認フロー</span><span class="td">◆</span>
+    <span class="ti">Google マイビジネス自動投稿</span><span class="td">◆</span>
+    <span class="ti">自律学習・プロンプト改良</span><span class="td">◆</span>
+    <span class="ti">アフィリエイト管理システム</span><span class="td">◆</span>
+    <span class="ti">SEO 記事自動生成</span><span class="td">◆</span>
+    <span class="ti">競合リサーチ</span><span class="td">◆</span>
+    <span class="ti">戦略立案 AI</span><span class="td">◆</span>
+    <span class="ti">SNS 自動投稿</span><span class="td">◆</span>
+    <span class="ti">コンテンツ自動生成</span><span class="td">◆</span>
+    <span class="ti">CVR 改善提案</span><span class="td">◆</span>
+    <span class="ti">LINE 承認フロー</span><span class="td">◆</span>
+    <span class="ti">Google マイビジネス自動投稿</span><span class="td">◆</span>
+    <span class="ti">自律学習・プロンプト改良</span><span class="td">◆</span>
+    <span class="ti">アフィリエイト管理システム</span><span class="td">◆</span>
+    <span class="ti">SEO 記事自動生成</span><span class="td">◆</span>
+    <span class="ti">競合リサーチ</span><span class="td">◆</span>
+  </div>
+</div>
+
+<!-- ▸ PROBLEM -->
+<section id="problem">
+  <div class="W">
+    <div class="eyebrow rv">課題</div>
+    <h2 class="rv">こんな状況、<br>心当たりはありませんか？</h2>
+    <div class="prob-grid rv">
+      <div class="prob-cell">
+        <div class="prob-no">01</div>
+        <div class="ico"><svg width="38" height="38" viewBox="0 0 38 38" stroke="var(--muted)" stroke-width="1.3"><circle cx="19" cy="19" r="13"/><path d="M19 13 L19 19 L24 22"/></svg></div>
+        <div class="prob-h">「何を投稿するか毎回迷う」</div>
+        <div class="prob-p">業種・季節・反応率から最適なコンテンツをAIが自動設計。「今日はこれを出す」まで決めてくれます。</div>
+      </div>
+      <div class="prob-cell">
+        <div class="prob-no">02</div>
+        <div class="ico"><svg width="38" height="38" viewBox="0 0 38 38" stroke="var(--muted)" stroke-width="1.3"><path d="M8 28 L14 18 L20 22 L26 10 L32 14"/><path d="M8 30 L32 30"/></svg></div>
+        <div class="prob-h">「投稿しても数字が読めない」</div>
+        <div class="prob-p">CTR・CVR・保存率をリアルタイム監視。「どの投稿がなぜ売れたか」を可視化します。</div>
+      </div>
+      <div class="prob-cell">
+        <div class="prob-no">03</div>
+        <div class="ico"><svg width="38" height="38" viewBox="0 0 38 38" stroke="var(--muted)" stroke-width="1.3"><circle cx="19" cy="14" r="7"/><path d="M7 32 Q7 22 19 22 Q31 22 31 32"/></svg></div>
+        <div class="prob-h">「代行費用が高すぎる」</div>
+        <div class="prob-p">人力SNS代行は月額10〜50万円。AIMOは月額3,900円〜。圧倒的なコスト削減を実現します。</div>
+      </div>
+      <div class="prob-cell">
+        <div class="prob-no">04</div>
+        <div class="ico"><svg width="38" height="38" viewBox="0 0 38 38" stroke="var(--muted)" stroke-width="1.3"><rect x="7" y="7" width="10" height="10" rx="2"/><rect x="21" y="7" width="10" height="10" rx="2"/><rect x="7" y="21" width="10" height="10" rx="2"/><rect x="21" y="21" width="10" height="10" rx="2"/></svg></div>
+        <div class="prob-h">「ツールが多すぎて管理できない」</div>
+        <div class="prob-p">戦略・制作・投稿・分析・通知がAIMO1つに集約。複数ツールをバラバラに使う必要がなくなります。</div>
+      </div>
+      <div class="prob-cell">
+        <div class="prob-no">05</div>
+        <div class="ico"><svg width="38" height="38" viewBox="0 0 38 38" stroke="var(--muted)" stroke-width="1.3"><path d="M14 26 Q14 18 19 18 Q25 18 25 12 Q25 7 19 7 Q13 7 13 12"/><circle cx="19" cy="32" r="2" fill="var(--muted)" stroke="none"/></svg></div>
+        <div class="prob-h">「PDCAが全然回せていない」</div>
+        <div class="prob-p">AIが毎日データを読んで改善提案を自動生成。「なぜ成果が出ないか」の答えが毎朝届きます。</div>
+      </div>
+      <div class="prob-cell">
+        <div class="prob-no">06</div>
+        <div class="ico"><svg width="38" height="38" viewBox="0 0 38 38" stroke="var(--muted)" stroke-width="1.3"><path d="M19 7 Q29 7 31 19 Q29 31 19 31 Q9 31 7 19 Q9 7 19 7"/><path d="M19 7 L19 31 M7 19 L31 19"/><path d="M11 12 Q16 15 19 12 Q22 9 27 12"/><path d="M11 26 Q16 23 19 26 Q22 29 27 26"/></svg></div>
+        <div class="prob-h">「Googleマイビジネスが放置状態」</div>
+        <div class="prob-p">GMB投稿を続けられている店舗は全体の2割以下。AIMOが週次で自動投稿し、MEO上位を狙います。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ SOLUTION -->
+<section id="solution">
+  <div class="W">
+    <div class="eyebrow rv">解決策</div>
+    <h2 class="rv">「売上サイクル」を<br>まるごと自動化する</h2>
+    <p class="sub rv">単なる自動投稿ではありません。立案から実行・学習まで、7ステップを完全に回します。</p>
+    <div class="flow rv">
+      <div class="fnode"><div class="fbub"><div class="ico"><svg width="22" height="22" viewBox="0 0 22 22" stroke="var(--muted)" stroke-width="1.3"><path d="M4 18 L11 4 L18 18 M7 13 L15 13"/></svg></div></div><div class="flbl">戦略立案</div><div class="fsub">媒体・商品決定</div></div>
+      <div class="fnode"><div class="fbub"><div class="ico"><svg width="22" height="22" viewBox="0 0 22 22" stroke="var(--muted)" stroke-width="1.3"><path d="M5 18 L5 8 Q5 6 7 6 L15 6 Q17 6 17 8 L17 18"/><path d="M8 10 L14 10 M8 13 L12 13"/></svg></div></div><div class="flbl">制作</div><div class="fsub">文・画像・動画</div></div>
+      <div class="fnode"><div class="fbub"><div class="ico"><svg width="22" height="22" viewBox="0 0 22 22" stroke="var(--muted)" stroke-width="1.3"><circle cx="11" cy="11" r="7"/><path d="M11 6 L11 11 L15 13"/></svg></div></div><div class="flbl">配信</div><div class="fsub">最適時間に自動</div></div>
+      <div class="fnode"><div class="fbub"><div class="ico"><svg width="22" height="22" viewBox="0 0 22 22" stroke="var(--muted)" stroke-width="1.3"><path d="M4 17 L8 11 L12 14 L16 6 L20 9"/><path d="M4 19 L20 19"/></svg></div></div><div class="flbl">分析</div><div class="fsub">CTR・CVRを監視</div></div>
+      <div class="fnode"><div class="fbub"><div class="ico"><svg width="22" height="22" viewBox="0 0 22 22" stroke="var(--muted)" stroke-width="1.3"><circle cx="11" cy="8" r="4"/><path d="M6 18 Q6 14 11 14 Q16 14 16 18"/><path d="M16 5 L20 9 M18 5 L20 7"/></svg></div></div><div class="flbl">改善提案</div><div class="fsub">根拠付きで提案</div></div>
+      <div class="fnode"><div class="fbub"><div class="ico"><svg width="22" height="22" viewBox="0 0 22 22" stroke="var(--muted)" stroke-width="1.3"><rect x="4" y="3" width="14" height="16" rx="2"/><path d="M7 8 L15 8 M7 11 L15 11 M7 14 L11 14"/></svg></div></div><div class="flbl">LINE承認</div><div class="fsub">スマホで確認</div></div>
+      <div class="fnode last"><div class="fbub"><div class="ico"><svg width="22" height="22" viewBox="0 0 22 22" stroke="var(--bg)" stroke-width="1.3"><path d="M5 11 L9 15 L17 7"/><path d="M11 3 Q18 3 19 11 Q18 19 11 19 Q4 19 3 11 Q4 3 11 3"/></svg></div></div><div class="flbl">実行・学習</div><div class="fsub">次回施策に反映</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ FEATURES -->
+<section id="features">
+  <div class="W">
+    <div class="eyebrow rv">機能</div>
+    <h2 class="rv">他社にない<br>10の差別化機能</h2>
+    <div class="feat-grid rv">
+      <div class="fc"><div class="fc-no">01</div><div class="ico"><svg width="36" height="36" viewBox="0 0 36 36" stroke="var(--muted)" stroke-width="1.3"><circle cx="14" cy="12" r="5"/><path d="M6 28 Q6 21 14 21"/><path d="M22 8 Q27 8 27 12 Q27 17 22 17"/><path d="M25 10 L30 6 M28 6 L30 8"/></svg></div><div class="fc-h">自律学習・プロンプト自己改良</div><div class="fc-p">成果データをAIが蓄積しプロンプトを自動改良。使えば使うほど自社の「勝ちパターン」に最適化されます。</div><span class="fc-badge">業界初機能</span></div>
+      <div class="fc"><div class="fc-no">02</div><div class="ico"><svg width="36" height="36" viewBox="0 0 36 36" stroke="var(--muted)" stroke-width="1.3"><rect x="8" y="6" width="20" height="24" rx="3"/><path d="M13 11 L23 11 M13 15 L23 15 M13 19 L18 19"/><path d="M21 23 L29 31 M25 23 L29 27"/></svg></div><div class="fc-h">LINE承認フロー搭載</div><div class="fc-p">「この投稿いく？」をLINEに通知。スマホで承認するだけ。PCレスで全施策が動きます。</div><span class="fc-badge" style="background:rgba(6,199,85,.08);color:var(--line);border-color:rgba(6,199,85,.2);">実務向き</span></div>
+      <div class="fc"><div class="fc-no">03</div><div class="ico"><svg width="36" height="36" viewBox="0 0 36 36" stroke="var(--muted)" stroke-width="1.3"><circle cx="18" cy="18" r="12"/><path d="M14 18 L18 14 L22 18"/><path d="M18 14 L18 24"/><path d="M24 12 L30 6 M27 6 L30 9"/></svg></div><div class="fc-h">アフィリエイトタグ発行</div><div class="fc-p">会員が自社サービスを紹介できるタグを発行。紹介経由のCV・売上を自動計測・報酬計算します。</div><span class="fc-badge" style="background:rgba(255,184,0,.08);color:var(--amber);border-color:rgba(255,184,0,.2);">収益加速</span></div>
+      <div class="fc"><div class="fc-no">04</div><div class="ico"><svg width="36" height="36" viewBox="0 0 36 36" stroke="var(--muted)" stroke-width="1.3"><circle cx="14" cy="14" r="7"/><path d="M19.5 19.5 L30 30"/><path d="M24 10 L30 10 M27 7 L27 13"/></svg></div><div class="fc-h">競合リサーチ自動化</div><div class="fc-p">同業他社の投稿・広告をAIが定期クローリング。「今何が刺さっているか」を自動抽出し次の施策に反映します。</div><span class="fc-badge" style="background:rgba(139,92,246,.08);color:var(--purple);border-color:rgba(139,92,246,.2);">情報優位</span></div>
+      <div class="fc"><div class="fc-no">05</div><div class="ico"><svg width="36" height="36" viewBox="0 0 36 36" stroke="var(--muted)" stroke-width="1.3"><path d="M8 28 L14 18 L20 22 L26 10 L32 15"/><path d="M8 30 L32 30"/><circle cx="26" cy="10" r="3"/></svg></div><div class="fc-h">CVR改善提案AI</div><div class="fc-p">離脱率・フォーム到達率をAIが監視。「LPのFV改善でCVR+2%見込み」など具体的改善提案を毎日レポート。</div><span class="fc-badge" style="background:rgba(255,69,96,.08);color:var(--red);border-color:rgba(255,69,96,.2);">成果直結</span></div>
+      <div class="fc"><div class="fc-no">06</div><div class="ico"><svg width="36" height="36" viewBox="0 0 36 36" stroke="var(--muted)" stroke-width="1.3"><path d="M8 28 L8 10 Q8 8 10 8 L26 8 Q28 8 28 10 L28 28"/><path d="M5 28 L31 28"/><path d="M13 13 L23 13 M13 17 L23 17 M13 21 L19 21"/></svg></div><div class="fc-h">SEO外部記事 自動生成</div><div class="fc-p">狙いキーワードを設定するだけで、E-E-A-T準拠のSEO記事を自動生成→WordPress/Noteへ自動投稿。</div><span class="fc-badge">集客強化</span></div>
+
+      <!-- NEW: 自動いいね -->
+      <div class="fc" style="border-top:1px solid var(--b1);"><div class="fc-no" style="color:var(--green);">07 — SNS自動化</div><div class="ico"><svg width="36" height="36" viewBox="0 0 36 36" stroke="var(--muted)" stroke-width="1.3"><path d="M10 28 L10 17 L8 17 Q6 17 6 15 L6 13 Q6 11 8 11 L12 11 Q12 8 14 6 Q16 4 18 5 L18 11 L22 11 Q24 11 24 13 L25 24 Q25 26 23 26 L12 26 Q10 26 10 24 Z"/><path d="M28 11 L28 26"/></svg></div><div class="fc-h">SNS 自動いいね・フォロー</div><div class="fc-p">ターゲットキーワード・ハッシュタグ・競合アカウントのフォロワーを自動いいね・フォロー。自然な形で認知を拡大しフォロワーを増加させます。1日の上限回数も設定可能でアカウント凍結リスクを最小化。</div><span class="fc-badge" style="background:rgba(0,229,160,.08);color:var(--green);border-color:rgba(0,229,160,.2);">認知拡大</span></div>
+
+      <!-- NEW: キーワード自動返信 -->
+      <div class="fc"><div class="fc-no" style="color:var(--amber);">08 — SNS自動化</div><div class="ico"><svg width="36" height="36" viewBox="0 0 36 36" stroke="var(--muted)" stroke-width="1.3"><path d="M7 24 Q7 10 19 10 Q31 10 31 18 Q31 26 19 26 L11 26 L7 30 Z"/><path d="M13 18 L25 18 M13 21 L20 21"/></svg></div><div class="fc-h">キーワードトリガー 自動返信 &amp; URL発行</div><div class="fc-p">コメント・DMに特定ワード（例：「欲しい」「詳細」「プレゼント」）が含まれると、AIが即座に返信＋会員専用のプレゼントURL・クーポンURLを自動発行して送信。人手ゼロでリスト獲得・販売を自動化します。</div><span class="fc-badge" style="background:rgba(255,184,0,.08);color:var(--amber);border-color:rgba(255,184,0,.2);">リスト獲得</span></div>
+
+      <!-- NEW: AI自動返答 -->
+      <div class="fc"><div class="fc-no" style="color:var(--cyan);">09 — SNS自動化</div><div class="ico"><svg width="36" height="36" viewBox="0 0 36 36" stroke="var(--muted)" stroke-width="1.3"><rect x="5" y="8" width="16" height="13" rx="2"/><path d="M5 16 L3 21 L9 18"/><path d="M17 18 Q28 18 29 24 Q28 30 17 30 L13 30 L9 33 L9 30 Q7 30 7 28"/><path d="M20 23 L26 23 M20 26 L24 26"/></svg></div><div class="fc-h">AI 自動返答（コメント・DM対応）</div><div class="fc-p">商品の質問・予約・クレームなど、コメントやDMにAIが自然な日本語で自動返答。あなたのブランドトーンを学習して返答するため、人間が書いたような文章で24時間対応。承認後に送信する安全モードも選択可能。</div><span class="fc-badge">24時間対応</span></div>
+
+      <!-- GMB wide -->
+      <div class="fc fw">
+        <div style="display:flex;gap:52px;flex-wrap:wrap;align-items:center;">
+          <div style="flex:1;min-width:240px;">
+            <div class="fc-no" style="color:var(--amber);">10 — NEW</div>
+            <div class="ico"><svg width="40" height="40" viewBox="0 0 40 40" stroke="var(--muted)" stroke-width="1.3"><path d="M20 6 Q32 6 34 20 Q32 34 20 34 Q8 34 6 20 Q8 6 20 6"/><path d="M20 6 L20 34 M6 20 L34 20"/><path d="M9 12 Q15 16 20 12 Q25 8 31 12"/><path d="M9 28 Q15 24 20 28 Q25 32 31 28"/></svg></div>
+            <div class="fc-h" style="font-size:20px;margin-top:14px;">Googleマイビジネス<br>記事作成・自動投稿</div>
+            <div class="fc-p" style="max-width:420px;">MEO対策に直結する「最新情報」「イベント」「特典」投稿をAIが自動生成し、Googleビジネスプロフィールへ直接投稿。検索上位表示と来店促進を同時に自動化します。</div>
+            <span class="fc-badge" style="background:rgba(66,133,244,.1);color:#4d8bdb;border-color:rgba(66,133,244,.25);">MEO × 集客 完全自動化</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;flex:1;min-width:260px;">
+            <div style="background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:16px 10px;text-align:center;"><div class="ico" style="margin:0 auto 8px;"><svg width="24" height="24" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.3"><path d="M5 19 L5 8 Q5 6 7 6 L17 6 Q19 6 19 8 L19 19"/><path d="M8 10 L16 10 M8 13 L13 13"/></svg></div><div style="font-size:11px;font-weight:600;color:var(--txt);">最新情報</div><div style="font-size:10px;color:var(--muted);margin-top:3px;">週次定期</div></div>
+            <div style="background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:16px 10px;text-align:center;"><div class="ico" style="margin:0 auto 8px;"><svg width="24" height="24" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.3"><path d="M12 2 L14.5 8 L21 8.5 L16 13 L17.5 20 L12 17 L6.5 20 L8 13 L3 8.5 L9.5 8 Z"/></svg></div><div style="font-size:11px;font-weight:600;color:var(--txt);">特典・クーポン</div><div style="font-size:10px;color:var(--muted);margin-top:3px;">キャンペーン連動</div></div>
+            <div style="background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:16px 10px;text-align:center;"><div class="ico" style="margin:0 auto 8px;"><svg width="24" height="24" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.3"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9 L21 9"/><path d="M8 2 L8 6 M16 2 L16 6"/></svg></div><div style="font-size:11px;font-weight:600;color:var(--txt);">イベント告知</div><div style="font-size:10px;color:var(--muted);margin-top:3px;">期間・場所付き</div></div>
+            <div style="background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:16px 10px;text-align:center;"><div class="ico" style="margin:0 auto 8px;"><svg width="24" height="24" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.3"><path d="M4 18 L8 12 L12 15 L16 7 L20 10"/><path d="M4 20 L20 20"/></svg></div><div style="font-size:11px;font-weight:600;color:var(--txt);">インサイト分析</div><div style="font-size:10px;color:var(--muted);margin-top:3px;">表示数・経路</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ STATS -->
+<section id="stats">
+  <div class="W">
+    <div class="eyebrow rv">実績</div>
+    <h2 class="rv">数字で見るAIMOの効果</h2>
+    <div class="stats-row rv">
+      <div class="sb"><span class="sn">97%</span><div class="sl">宣伝業務の自動化率</div><div class="ss">人的作業をほぼゼロに</div></div>
+      <div class="sb"><span class="sn">4.3×</span><div class="sl">平均CVR改善倍率</div><div class="ss">導入前比較ベータ実績</div></div>
+      <div class="sb"><span class="sn">¥0</span><div class="sl">初期費用</div><div class="ss">30トークン付き無料スタート</div></div>
+      <div class="sb"><span class="sn">5min</span><div class="sl">セットアップ時間</div><div class="ss">登録→初回投稿まで最短5分</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ SNS AUTOMATION -->
+<section id="sns-auto" style="background:var(--s1);">
+  <div class="W">
+    <div class="eyebrow rv">SNS自動化</div>
+    <h2 class="rv">投稿・いいね・返信・返答<br>SNS運用をまるごと自動化</h2>
+    <p class="sub rv">AIMOのSNS自動化エンジンは4層構造。コンテンツを投稿するだけでなく、反応を拾い・会話し・リストを獲得し・売上につなげます。</p>
+
+    <!-- 4 pillars -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:56px;" class="rv">
+
+      <!-- 投稿 -->
+      <div style="background:var(--bg);border:1px solid var(--b1);border-radius:16px;padding:28px 22px;transition:all .3s var(--ease);" onmouseenter="this.style.borderColor='var(--cyan)'" onmouseleave="this.style.borderColor='var(--b1)'">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);display:flex;align-items:center;justify-content:center;margin-bottom:18px;">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--cyan)" stroke-width="1.4" stroke-linecap="round"><rect x="3" y="3" width="16" height="16" rx="2"/><path d="M6 8 L16 8 M6 11 L16 11 M6 14 L11 14"/></svg>
+        </div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);margin-bottom:8px;">LAYER 01</div>
+        <div style="font-size:15px;font-weight:700;color:var(--txt);margin-bottom:10px;font-family:'Noto Sans JP',sans-serif;">自動投稿</div>
+        <div style="font-size:12px;color:#9898b8;line-height:1.8;font-weight:300;">戦略→文章生成→画像生成→最適時間に自動予約投稿。X・Instagram・LINE・Facebook対応。</div>
+      </div>
+
+      <!-- いいね -->
+      <div style="background:var(--bg);border:1px solid var(--b1);border-radius:16px;padding:28px 22px;transition:all .3s var(--ease);" onmouseenter="this.style.borderColor='var(--green)'" onmouseleave="this.style.borderColor='var(--b1)'">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.2);display:flex;align-items:center;justify-content:center;margin-bottom:18px;">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--green)" stroke-width="1.4" stroke-linecap="round"><path d="M6 18 L6 11 L5 11 Q4 11 4 10 L4 8 Q4 7 5 7 L8 7 Q8 5 9.5 3.5 Q11 2 12 3 L12 7 L15 7 Q16 7 16 8 L16.5 16 Q16.5 17 15.5 17 L7 17 Q6 17 6 16 Z"/><path d="M18 7 L18 17"/></svg>
+        </div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--green);margin-bottom:8px;">LAYER 02</div>
+        <div style="font-size:15px;font-weight:700;color:var(--txt);margin-bottom:10px;font-family:'Noto Sans JP',sans-serif;">自動いいね・フォロー</div>
+        <div style="font-size:12px;color:#9898b8;line-height:1.8;font-weight:300;">ターゲットキーワード・ハッシュタグ・競合フォロワーに自動いいね＋フォロー。1日上限設定で凍結リスクを管理。</div>
+      </div>
+
+      <!-- キーワード返信 -->
+      <div style="background:var(--bg);border:1px solid var(--b1);border-radius:16px;padding:28px 22px;transition:all .3s var(--ease);" onmouseenter="this.style.borderColor='var(--amber)'" onmouseleave="this.style.borderColor='var(--b1)'">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.2);display:flex;align-items:center;justify-content:center;margin-bottom:18px;">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--amber)" stroke-width="1.4" stroke-linecap="round"><path d="M3 15 Q3 6 11 6 Q19 6 19 11 Q19 16 11 16 L6 16 L3 19 Z"/><path d="M7 11 L15 11 M7 13 L12 13"/></svg>
+        </div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin-bottom:8px;">LAYER 03</div>
+        <div style="font-size:15px;font-weight:700;color:var(--txt);margin-bottom:10px;font-family:'Noto Sans JP',sans-serif;">キーワード自動返信 &amp; URL発行</div>
+        <div style="font-size:12px;color:#9898b8;line-height:1.8;font-weight:300;">「欲しい」「送って」などのワードを検知し、会員専用URL・プレゼントURLを自動発行して即返信。人手ゼロでリスト獲得。</div>
+      </div>
+
+      <!-- AI返答 -->
+      <div style="background:var(--bg);border:1px solid var(--b1);border-radius:16px;padding:28px 22px;transition:all .3s var(--ease);" onmouseenter="this.style.borderColor='var(--purple)'" onmouseleave="this.style.borderColor='var(--b1)'">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);display:flex;align-items:center;justify-content:center;margin-bottom:18px;">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--purple)" stroke-width="1.4" stroke-linecap="round"><rect x="2" y="4" width="11" height="9" rx="2"/><path d="M2 10 L1 14 L5 12"/><path d="M10 11 Q19 11 19 16 Q19 21 10 21 L7 21 L5 23 L5 21 Q4 21 4 19"/><path d="M12 15 L17 15 M12 18 L15 18"/></svg>
+        </div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);margin-bottom:8px;">LAYER 04</div>
+        <div style="font-size:15px;font-weight:700;color:var(--txt);margin-bottom:10px;font-family:'Noto Sans JP',sans-serif;">AI 自動返答</div>
+        <div style="font-size:12px;color:#9898b8;line-height:1.8;font-weight:300;">質問・クレーム・予約DM等をAIがブランドトーンで自動返答。安全モードで承認後送信も選択可。24時間365日対応。</div>
+      </div>
+    </div>
+
+    <!-- Live mock: SNS automation feed -->
+    <div style="margin-top:56px;background:var(--bg);border:1px solid var(--b1);border-radius:20px;overflow:hidden;" class="rv">
+      <!-- topbar -->
+      <div style="background:var(--s2);padding:14px 24px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;"></div>
+          <span style="font-size:12px;font-weight:700;color:var(--txt);letter-spacing:.06em;">SNS自動化 ライブログ</span>
+        </div>
+        <div style="display:flex;gap:18px;">
+          <span style="font-size:11px;color:var(--cyan);">今日のいいね <b>247</b></span>
+          <span style="font-size:11px;color:var(--green);">自動返信 <b>34件</b></span>
+          <span style="font-size:11px;color:var(--amber);">URL発行 <b>12件</b></span>
+          <span style="font-size:11px;color:var(--purple);">AI返答 <b>8件</b></span>
+        </div>
+      </div>
+      <!-- log items -->
+      <div style="padding:0 24px;">
+
+        <!-- log row 1: 投稿 -->
+        <div style="display:flex;align-items:flex-start;gap:16px;padding:18px 0;border-bottom:1px solid var(--b1);">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="var(--cyan)" stroke-width="1.4" stroke-linecap="round"><rect x="2" y="2" width="11" height="11" rx="1.5"/><path d="M4 6 L11 6 M4 8.5 L8 8.5"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+              <span style="font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:.08em;text-transform:uppercase;">自動投稿</span>
+              <span style="font-size:10px;color:var(--muted);">12:00 · Instagram</span>
+              <span style="font-size:10px;background:rgba(0,229,160,.1);color:var(--green);border:1px solid rgba(0,229,160,.2);padding:2px 8px;border-radius:100px;">公開済み</span>
+            </div>
+            <div style="font-size:13px;color:#c8c8e0;line-height:1.75;">【春の新メニュー🌸】毛穴ケアコース 期間限定50%OFFスタート！詳細はプロフのリンクから。#エステ #渋谷</div>
+          </div>
+        </div>
+
+        <!-- log row 2: いいね -->
+        <div style="display:flex;align-items:flex-start;gap:16px;padding:18px 0;border-bottom:1px solid var(--b1);">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="var(--green)" stroke-width="1.4" stroke-linecap="round"><path d="M3 11 L3 7 L2 7 Q1.5 7 1.5 6.5 L1.5 5.5 Q1.5 5 2 5 L4 5 Q4 3.5 5 2.5 Q6 1.5 6.5 2 L6.5 5 L9 5 Q9.5 5 9.5 5.5 L10 9.5 Q10 10 9.5 10 L4 10 Q3 10 3 9.5 Z"/><path d="M12 5 L12 10"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+              <span style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:.08em;text-transform:uppercase;">自動いいね</span>
+              <span style="font-size:10px;color:var(--muted);">12:03 · Instagram</span>
+            </div>
+            <div style="font-size:13px;color:#c8c8e0;line-height:1.75;"><b style="color:var(--txt);">@beauty_lover_tokyo</b> の投稿に自動いいね（#エステ #渋谷 で検索） — 本日 <b style="color:var(--green);">247件</b> 完了 / 上限300件</div>
+          </div>
+        </div>
+
+        <!-- log row 3: キーワード返信 -->
+        <div style="display:flex;align-items:flex-start;gap:16px;padding:18px 0;border-bottom:1px solid var(--b1);">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,184,0,.12);border:1px solid rgba(255,184,0,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="var(--amber)" stroke-width="1.4" stroke-linecap="round"><path d="M2 10 Q2 4 8 4 Q14 4 14 8 Q14 12 8 12 L5 12 L2 14 Z"/><path d="M5 8 L11 8 M5 10 L9 10"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+              <span style="font-size:11px;font-weight:700;color:var(--amber);letter-spacing:.08em;text-transform:uppercase;">キーワード返信 + URL発行</span>
+              <span style="font-size:10px;color:var(--muted);">12:17 · Instagram DM</span>
+              <span style="font-size:10px;background:rgba(255,184,0,.1);color:var(--amber);border:1px solid rgba(255,184,0,.2);padding:2px 8px;border-radius:100px;">自動送信済み</span>
+            </div>
+            <div style="background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;margin-top:6px;">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">受信コメント → キーワード検知「<b style="color:var(--amber);">プレゼント</b>」</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;">
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">@user_hana</div>
+                  <div style="font-size:12px;color:#c8c8e0;">プレゼントってどこで受け取れますか？</div>
+                </div>
+                <div style="background:rgba(255,184,0,.06);border:1px solid rgba(255,184,0,.15);border-radius:8px;padding:10px 12px;">
+                  <div style="font-size:10px;color:var(--amber);margin-bottom:4px;">AIMO 自動返信</div>
+                  <div style="font-size:12px;color:#c8c8e0;">こちらの専用URLからお受け取りください🎁<br><span style="color:var(--cyan);font-size:11px;">https://aimo.gift/abc123?ref=hana</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- log row 4: AI返答 -->
+        <div style="display:flex;align-items:flex-start;gap:16px;padding:18px 0;">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="var(--purple)" stroke-width="1.4" stroke-linecap="round"><rect x="1" y="2" width="8" height="6" rx="1.5"/><path d="M1 7 L0 9 L3 8"/><path d="M7 8 Q14 8 14 11 Q14 14 7 14 L5 14 L3 15.5 L3 14 Q2 14 2 12.5"/><path d="M8 11 L12 11 M8 12.5 L11 12.5"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">
+              <span style="font-size:11px;font-weight:700;color:var(--purple);letter-spacing:.08em;text-transform:uppercase;">AI 自動返答</span>
+              <span style="font-size:10px;color:var(--muted);">12:44 · Instagram コメント</span>
+              <span style="font-size:10px;background:rgba(139,92,246,.1);color:var(--purple);border:1px solid rgba(139,92,246,.2);padding:2px 8px;border-radius:100px;">承認待ち</span>
+            </div>
+            <div style="background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;margin-top:6px;">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">受信コメント → AI返答案を生成</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;">
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">@skincare_yuki</div>
+                  <div style="font-size:12px;color:#c8c8e0;">施術後どのくらいで効果が出ますか？敏感肌でも大丈夫ですか？</div>
+                </div>
+                <div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.15);border-radius:8px;padding:10px 12px;">
+                  <div style="font-size:10px;color:var(--purple);margin-bottom:4px;">AIMO AI返答案</div>
+                  <div style="font-size:12px;color:#c8c8e0;">ご質問ありがとうございます🌸 通常2〜3回で実感いただけます。敏感肌対応のコースもご用意しておりますので、お気軽にご相談ください！</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:10px;">
+                <button style="font-size:11px;font-weight:600;background:var(--purple);color:white;border:none;border-radius:100px;padding:6px 16px;cursor:pointer;">承認して送信</button>
+                <button style="font-size:11px;font-weight:400;background:transparent;color:var(--muted);border:1px solid var(--b2);border-radius:100px;padding:6px 16px;cursor:pointer;">修正する</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Keyword trigger settings preview -->
+    <div style="margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:20px;" class="rv">
+      <div style="background:var(--bg);border:1px solid var(--b1);border-radius:16px;padding:28px;">
+        <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:18px;display:flex;align-items:center;gap:8px;font-family:'Noto Sans JP',sans-serif;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--amber)" stroke-width="1.4" stroke-linecap="round"><path d="M2 10 Q2 3 8 3 Q14 3 14 7 Q14 11 8 11 L5 11 L2 13 Z"/></svg>
+          キーワード設定例
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:3px;">トリガーワード</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;"><span style="font-size:12px;color:var(--amber);background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.2);padding:3px 10px;border-radius:100px;">欲しい</span><span style="font-size:12px;color:var(--amber);background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.2);padding:3px 10px;border-radius:100px;">詳細</span><span style="font-size:12px;color:var(--amber);background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.2);padding:3px 10px;border-radius:100px;">送って</span></div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px;color:var(--muted);">発行URL</div>
+              <div style="font-size:11px;color:var(--cyan);">商品LP（個別トークン付き）</div>
+            </div>
+          </div>
+          <div style="background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:3px;">トリガーワード</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;"><span style="font-size:12px;color:var(--amber);background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.2);padding:3px 10px;border-radius:100px;">プレゼント</span><span style="font-size:12px;color:var(--amber);background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.2);padding:3px 10px;border-radius:100px;">ギフト</span></div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px;color:var(--muted);">発行URL</div>
+              <div style="font-size:11px;color:var(--green);">プレゼントDL（1回限り）</div>
+            </div>
+          </div>
+          <div style="background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:3px;">トリガーワード</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;"><span style="font-size:12px;color:var(--amber);background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.2);padding:3px 10px;border-radius:100px;">予約</span><span style="font-size:12px;color:var(--amber);background:rgba(255,184,0,.1);border:1px solid rgba(255,184,0,.2);padding:3px 10px;border-radius:100px;">申し込み</span></div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px;color:var(--muted);">発行URL</div>
+              <div style="font-size:11px;color:var(--purple);">予約フォーム（自動追跡付き）</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--b1);border-radius:16px;padding:28px;">
+        <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:18px;display:flex;align-items:center;gap:8px;font-family:'Noto Sans JP',sans-serif;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--purple)" stroke-width="1.4" stroke-linecap="round"><rect x="1" y="2" width="8" height="6" rx="1.5"/><path d="M1 7 L0 9 L3 8"/><path d="M7 8 Q14 8 14 11 Q14 14 7 14 L5 14 L3 15.5 L3 14 Q2 14 2 12.5"/></svg>
+          AI返答の安全モード設定
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.18);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:4px;">✓ 完全自動モード</div>
+            <div style="font-size:12px;color:#9898b8;line-height:1.75;">AIが即座に返答を送信。24時間無人で対応。一般的なQ&amp;A・感謝返信に最適。</div>
+          </div>
+          <div style="background:rgba(255,184,0,.05);border:1px solid rgba(255,184,0,.18);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:4px;">◉ 承認モード（推奨）</div>
+            <div style="font-size:12px;color:#9898b8;line-height:1.75;">AIが返答案を生成→LINEで通知→承認後に送信。クレーム・商談・デリケートな質問に最適。</div>
+          </div>
+          <div style="background:rgba(139,92,246,.05);border:1px solid rgba(139,92,246,.18);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:4px;">◎ ハイブリッドモード</div>
+            <div style="font-size:12px;color:#9898b8;line-height:1.75;">感謝・一般質問は自動、クレームや価格交渉は承認待ちに自動振り分け。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ AGENTS -->
+<section id="agents">
+  <div class="W">
+    <div class="eyebrow rv">エージェント</div>
+    <h2 class="rv">5体のAIエージェントが<br>24時間分業稼働</h2>
+    <p class="sub rv">1体に全部やらせるより分業型が強い。それぞれの専門AIが連携して動きます。</p>
+    <div class="agents-row rv">
+      <div class="ac"><div class="ac-ring"><div class="ico"><svg width="22" height="22" viewBox="0 0 22 22" stroke="var(--muted)" stroke-width="1.3"><path d="M11 3 L13 7.5 L18 8 L14.5 11.5 L15.5 16.5 L11 14 L6.5 16.5 L7.5 11.5 L4 8 L9 7.5 Z"/></svg></div></div><div class="ac-id">AGENT 01</div><div class="ac-name">CMOエージェント</div><div class="ac-desc">全体戦略・目標設計・優先施策決定</div><div class="ac-live">稼働中</div></div>
+      <div class="ac"><div class="ac-ring"><div class="ico"><svg width="22" height="22" viewBox="0 0 22 22" stroke="var(--muted)" stroke-width="1.3"><rect x="4" y="4" width="14" height="14" rx="2"/><path d="M7 8 L15 8 M7 11 L15 11 M7 14 L11 14"/></svg></div></div><div class="ac-id">AGENT 02</div><div class="ac-name">SNS運用エージェント</div><div class="ac-desc">投稿・自動いいね・キーワード返信・AI返答・エンゲージメント分析</div><div class="ac-live">稼働中</div></div>
+      <div class="ac"><div class="ac-ring"><div class="ico"><svg width="22" height="22" viewBox="0 0 22 22" stroke="var(--muted)" stroke-width="1.3"><rect x="3" y="3" width="16" height="16" rx="2"/><path d="M3 9 L19 9 M9 3 L9 19"/></svg></div></div><div class="ac-id">AGENT 03</div><div class="ac-name">LP改善エージェント</div><div class="ac-desc">CVR改善・CTA最適化・構成改善</div><div class="ac-live">提案待ち</div></div>
+      <div class="ac"><div class="ac-ring"><div class="ico"><svg width="22" height="22" viewBox="0 0 22 22" stroke="var(--muted)" stroke-width="1.3"><path d="M4 17 L8 11 L12 14 L16 6 L20 9"/><path d="M4 19 L20 19"/></svg></div></div><div class="ac-id">AGENT 04</div><div class="ac-name">データ分析エージェント</div><div class="ac-desc">GA/SNS/LINE集計・異常検知・レポート</div><div class="ac-live">稼働中</div></div>
+      <div class="ac"><div class="ac-ring"><div class="ico"><svg width="22" height="22" viewBox="0 0 22 22" stroke="var(--muted)" stroke-width="1.3"><path d="M11 3 Q17 3 18 11 Q17 19 11 19 Q5 19 4 11 Q5 3 11 3"/><path d="M8 7 L14 7 M8 10 L14 10 M8 13 L11 13"/></svg></div></div><div class="ac-id">AGENT 05</div><div class="ac-name">通知エージェント</div><div class="ac-desc">LINE通知・承認受付・実行フロー管理</div><div class="ac-live">稼働中</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ LINE -->
+<section id="line-sec">
+  <div class="W">
+    <div class="line-layout">
+      <div class="rv">
+        <div class="phone">
+          <div class="phone-notch"><div class="phone-cam"></div></div>
+          <div class="phone-screen">
+            <div class="ltopbar">
+              <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" stroke="white" stroke-width="1.4"><path d="M12 3 Q19 3 20 12 Q19 21 12 21 Q5 21 4 12 Q5 3 12 3"/><path d="M8 10 L16 10 M8 13 L14 13"/></svg></div>
+              <span class="ltop-name">AIMO エージェント</span>
+            </div>
+            <div class="msgs">
+              <div class="mai"><div class="bbl bai">📊 本日の分析結果です。Instagram保存率が高くCV低い。「診断導線」への切替でCVR+1.8%見込みです。承認しますか？</div><div class="mtime">12:34</div></div>
+              <div class="mme"><div class="bbl bme">承認</div><div class="mtime r">12:35 ✓✓</div></div>
+              <div class="mai"><div class="bbl bai">✓ 承認しました。本日18:00に自動実行します。</div><div class="mtime">12:35</div></div>
+              <div class="mai" style="margin-top:4px;"><div class="bbl bwarn">⚠ 広告AのCPAが目標比145%。停止を推奨します。</div><div class="mtime">18:02</div></div>
+              <div class="mme"><div class="bbl bme">停止して</div><div class="mtime r">18:04 ✓✓</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="rv">
+        <div class="eyebrow">LINE承認</div>
+        <h2 style="margin-bottom:16px;">スマホで承認するだけ。<br>PCは不要。</h2>
+        <p class="sub" style="margin-bottom:40px;">AIMOはあなたのLINEに直接提案を送ります。「承認」と返信すれば実行。それだけです。</p>
+        <div class="lf-list">
+          <div class="lf-row"><div class="lf-ico"><div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" stroke="var(--muted)" stroke-width="1.3"><path d="M10 2 Q16 2 17 10 Q16 18 10 18 Q4 18 3 10 Q4 2 10 2"/><path d="M7 9 L13 9 M7 12 L11 12"/></svg></div></div><div><div class="lf-h">提案通知</div><div class="lf-p">AIが根拠付きで「今こうした方がいい」を提案。数値データ付きで判断しやすい。</div></div></div>
+          <div class="lf-row"><div class="lf-ico"><div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" stroke="var(--muted)" stroke-width="1.3"><path d="M10 3 L10 11"/><circle cx="10" cy="15" r="1.2" fill="var(--muted)" stroke="none"/><path d="M5 6 Q2 10 4 15 Q6 19 10 19 Q14 19 16 15 Q18 10 15 6"/></svg></div></div><div><div class="lf-h">警告アラート</div><div class="lf-p">CPAが悪化したら即通知。問題が広がる前に止められます。</div></div></div>
+          <div class="lf-row"><div class="lf-ico"><div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" stroke="var(--muted)" stroke-width="1.3"><path d="M3 16 L7 10 L11 13 L15 5 L19 8"/><path d="M3 18 L19 18"/></svg></div></div><div><div class="lf-h">日次・週次レポート</div><div class="lf-p">毎朝8時に昨日の成果サマリーを送信。1分で状況把握が完了します。</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ GMB -->
+<section id="gmb">
+  <div class="W">
+    <div class="eyebrow rv">Googleマイビジネス</div>
+    <h2 class="rv">Googleマップ検索から<br>来店・問い合わせを自動で増やす</h2>
+    <p class="sub rv">MEOの決め手は「投稿の継続」。AIMOがGoogleビジネスプロフィールへの投稿を完全自動化します。</p>
+    <div class="gmb-layout">
+      <div class="rv">
+        <div class="gmb-shell">
+          <div class="gbar"><div class="glogo"><span class="gB">G</span><span class="gR">o</span><span class="gY">o</span><span class="gB">g</span><span class="gG">l</span><span class="gR">e</span></div><div class="gsearch">○○ エステ 渋谷</div></div>
+          <div class="gmap"><div class="gpin"><svg width="34" height="42" viewBox="0 0 34 42" fill="none"><path d="M17 2 Q31 2 32 17 Q31 36 17 40 Q3 36 2 17 Q3 2 17 2Z" fill="#c0392b" stroke="#922b21" stroke-width="1"/><circle cx="17" cy="16" r="5.5" fill="white"/></svg></div></div>
+          <div class="ginfo">
+            <div class="gbiz">サロン Bella — 渋谷店</div>
+            <div class="gcat">エステティックサロン · 渋谷区</div>
+            <div class="gstars"><span class="gsrow">★★★★★</span><span style="font-size:12px;font-weight:700;color:#202124;">4.8</span><span style="font-size:11px;color:#70757a;">(127件)</span></div>
+            <div class="gacts"><div class="gact">ウェブサイト</div><div class="gact">電話</div><div class="gact">経路</div></div>
+            <div class="gposts-hd">🤖 AIMOが自動投稿した最新情報</div>
+            <div class="gpost"><span class="gbadge bg">🎁 特典</span><div class="gtxt">【春キャンペーン🌸】初回体験コース50%OFF！4月末まで限定。今すぐご予約ください。</div><div class="gdate">2025年3月11日 · AIMO自動投稿</div></div>
+            <div class="gpost"><span class="gbadge br">📅 イベント</span><div class="gtxt">【3月限定】美肌診断フェア開催中。プロが無料でお肌診断します。</div><div class="gdate">2025年3月4日 · AIMO自動投稿</div></div>
+          </div>
+          <div class="gauto"><div class="gadot"></div><div class="gatxt">このGoogleビジネスプロフィール投稿は<strong>AIMO</strong>が自動生成・自動投稿しています</div></div>
+        </div>
+      </div>
+      <div class="rv">
+        <div class="gwhy"><div class="gwhy-cap">なぜGMBが重要か</div><p class="gwhy-p">Googleマップで検索上位に表示されるかどうかはMEO対策次第。<strong>定期的なGMB投稿はMEOの最重要施策</strong>ですが、継続できている店舗は全体の2割以下です。</p></div>
+        <div class="gf-list">
+          <div class="gf-row"><div class="gf-ico"><div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" stroke="var(--muted)" stroke-width="1.3"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M6 8 L14 8 M6 11 L10 11"/></svg></div></div><div><div class="gf-h">投稿文・画像をAIが自動生成</div><div class="gf-p">業種・季節・キャンペーンをもとに4種類の投稿をAIが自動作成します。</div></div></div>
+          <div class="gf-row"><div class="gf-ico"><div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" stroke="var(--muted)" stroke-width="1.3"><circle cx="10" cy="10" r="7"/><path d="M10 6 L10 10 L13 12"/></svg></div></div><div><div class="gf-h">週次・月次で自動スケジュール投稿</div><div class="gf-p">Googleが推奨する週1〜2回の投稿ペースを自動維持。手動管理は一切不要。</div></div></div>
+          <div class="gf-row"><div class="gf-ico"><div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" stroke="var(--muted)" stroke-width="1.3"><path d="M3 15 L7 9 L11 12 L15 5 L19 8"/><path d="M3 17 L19 17"/></svg></div></div><div><div class="gf-h">インサイト数値を一元管理</div><div class="gf-p">表示数・マップ表示・クリック数・経路リクエストをSNS数値と並べて分析。</div></div></div>
+          <div class="gf-row"><div class="gf-ico"><div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" stroke="var(--muted)" stroke-width="1.3"><circle cx="10" cy="8" r="4"/><path d="M4 18 Q4 13 10 13 Q16 13 16 18"/><path d="M14 5 L18 9 M16 5 L18 7"/></svg></div></div><div><div class="gf-h">口コミ通知＋AI返信文案作成</div><div class="gf-p">新しい口コミが来たらLINEで即通知。AIが返信文案を自動生成し、承認するだけで投稿完了。</div></div></div>
+        </div>
+        <div class="gtypes">
+          <div class="gtype"><div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" stroke="var(--muted)" stroke-width="1.3"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M6 8 L14 8 M6 11 L14 11 M6 14 L10 14"/></svg></div><div class="gtype-h">最新情報</div><div class="gtype-s">週次定期</div></div>
+          <div class="gtype"><div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" stroke="var(--muted)" stroke-width="1.3"><path d="M10 2 L12 7.5 L18 8 L14 12 L15 18 L10 15 L5 18 L6 12 L2 8 L8 7.5 Z"/></svg></div><div class="gtype-h">特典・クーポン</div><div class="gtype-s">キャンペーン連動</div></div>
+          <div class="gtype"><div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" stroke="var(--muted)" stroke-width="1.3"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8 L17 8"/><path d="M7 2 L7 6 M13 2 L13 6"/></svg></div><div class="gtype-h">イベント告知</div><div class="gtype-s">期間・場所付き</div></div>
+          <div class="gtype"><div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" stroke="var(--muted)" stroke-width="1.3"><path d="M3 16 L6 10 L10 13 L14 6 L18 9"/><path d="M3 18 L18 18"/></svg></div><div class="gtype-h">インサイト分析</div><div class="gtype-s">表示数・経路</div></div>
+        </div>
+        <div class="gbiz-tags">
+          <div class="gbiz-tag">エステ・美容院</div><div class="gbiz-tag">飲食店・カフェ</div><div class="gbiz-tag">クリニック・歯科</div><div class="gbiz-tag">ジム・スポーツ</div><div class="gbiz-tag">不動産・リフォーム</div><div class="gbiz-tag">塾・スクール</div><div class="gbiz-tag">士業・コンサル</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ COMPARISON -->
+<section id="comparison">
+  <div class="W">
+    <div class="eyebrow rv">比較</div>
+    <h2 class="rv">他社ツールとの<br>決定的な違い</h2>
+    <div class="comp rv">
+      <div class="c-head"><div class="chcell">比較項目</div><div class="chcell">Buffer / Hootsuite</div><div class="chcell">国内SNSツール</div><div class="chcell hi">AIMO</div></div>
+      <div class="c-row"><div class="ccell">自動投稿・予約</div><div class="ccell cyes">✓ あり</div><div class="ccell cyes">✓ あり</div><div class="ccell chi">✓ あり</div></div>
+      <div class="c-row"><div class="ccell">自動いいね・フォロー</div><div class="ccell cno">—</div><div class="ccell cno">—</div><div class="ccell chi">✓ NEW</div></div>
+      <div class="c-row"><div class="ccell">キーワード自動返信 + URL発行</div><div class="ccell cno">—</div><div class="ccell cno">—</div><div class="ccell chi">✓ NEW</div></div>
+      <div class="c-row"><div class="ccell">AI自動返答（コメント・DM）</div><div class="ccell cno">—</div><div class="ccell cno">—</div><div class="ccell chi">✓ NEW</div></div>
+      <div class="c-row"><div class="ccell">AI文章・画像生成</div><div class="ccell" style="color:var(--muted)">一部のみ</div><div class="ccell" style="color:var(--muted)">一部のみ</div><div class="ccell chi">✓ フル対応</div></div>
+      <div class="c-row"><div class="ccell">戦略立案AI</div><div class="ccell cno">—</div><div class="ccell cno">—</div><div class="ccell chi">✓ あり</div></div>
+      <div class="c-row"><div class="ccell">自律プロンプト改良</div><div class="ccell cno">—</div><div class="ccell cno">—</div><div class="ccell chi">✓ 業界初</div></div>
+      <div class="c-row"><div class="ccell">LINE承認フロー</div><div class="ccell cno">—</div><div class="ccell cno">—</div><div class="ccell chi">✓ あり</div></div>
+      <div class="c-row"><div class="ccell">CVR改善提案</div><div class="ccell cno">—</div><div class="ccell cno">—</div><div class="ccell chi">✓ あり</div></div>
+      <div class="c-row"><div class="ccell">Googleマイビジネス自動投稿</div><div class="ccell cno">—</div><div class="ccell cno">—</div><div class="ccell chi">✓ MEO対応</div></div>
+      <div class="c-row"><div class="ccell">自社EC アフィリエイト管理</div><div class="ccell cno">—</div><div class="ccell cno">—</div><div class="ccell chi">✓ NEW</div></div>
+      <div class="c-row"><div class="ccell">月額費用（スタンダード）</div><div class="ccell" style="color:var(--muted)">$18〜（約¥2,800）</div><div class="ccell" style="color:var(--muted)">¥55,000〜</div><div class="ccell chi">¥6,900〜</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ COST COMPARISON: HUMAN vs AIMO -->
+<section id="cost-compare" style="background:var(--bg);">
+  <div class="W">
+    <div class="eyebrow rv">コスト比較</div>
+    <h2 class="rv">人に頼む vs AIMOに任せる<br>1ヶ月・1年の差</h2>
+    <p class="sub rv">毎日SNS運用・返信・いいね・GMB投稿・分析・改善提案を行う場合の実コスト比較。</p>
+
+    <!-- Main comparison table -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:60px;" class="rv">
+
+      <!-- HUMAN side -->
+      <div style="background:var(--s1);border:1px solid var(--b1);border-radius:20px;overflow:hidden;">
+        <div style="background:var(--s2);padding:20px 28px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,69,96,.12);border:1px solid rgba(255,69,96,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="var(--red)" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="6" r="4"/><path d="M3 18 Q3 13 10 13 Q17 13 17 18"/></svg>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--txt);font-family:'Noto Sans JP',sans-serif;">人に任せる場合</div>
+            <div style="font-size:11px;color:var(--muted);">アルバイト・パート・外注スタッフ</div>
+          </div>
+        </div>
+        <div style="padding:24px 28px;">
+          <!-- cost items -->
+          <div style="display:flex;flex-direction:column;gap:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--b1);">
+              <div>
+                <div style="font-size:13px;color:var(--txt);font-weight:400;">SNS投稿・返信（週5日・1日2h）</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px;">時給1,200円 × 2h × 22日</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--red);font-family:'Syne',sans-serif;">¥52,800</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--b1);">
+              <div>
+                <div style="font-size:13px;color:var(--txt);font-weight:400;">分析・レポート作成（月4回）</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px;">外注 ¥8,000 × 4回 / 月</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--red);font-family:'Syne',sans-serif;">¥32,000</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--b1);">
+              <div>
+                <div style="font-size:13px;color:var(--txt);font-weight:400;">LP改善・広告文案作成</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px;">外注ライター ¥15,000〜/月</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--red);font-family:'Syne',sans-serif;">¥15,000</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--b1);">
+              <div>
+                <div style="font-size:13px;color:var(--txt);font-weight:400;">GMB投稿・口コミ返信</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px;">担当者工数 ¥2,000 × 10件</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--red);font-family:'Syne',sans-serif;">¥20,000</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--b1);">
+              <div>
+                <div style="font-size:13px;color:var(--txt);font-weight:400;">戦略立案・ミーティング</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px;">経営者・担当者の時間（月8h）</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--red);font-family:'Syne',sans-serif;">¥40,000</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;">
+              <div>
+                <div style="font-size:13px;color:var(--txt);font-weight:400;">採用コスト・管理コスト（月換算）</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px;">求人掲載・教育・引き継ぎ等</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--red);font-family:'Syne',sans-serif;">¥15,000</div>
+            </div>
+          </div>
+          <!-- total -->
+          <div style="background:rgba(255,69,96,.06);border:1px solid rgba(255,69,96,.18);border-radius:14px;padding:18px 20px;margin-top:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <div style="font-size:13px;color:var(--muted);">月額合計</div>
+              <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--red);">¥174,800</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-size:13px;color:var(--muted);">年間合計</div>
+              <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--red);">¥2,097,600</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;background:rgba(255,69,96,.04);border-radius:10px;padding:12px 14px;">
+            <div style="font-size:12px;color:var(--muted);line-height:1.8;font-weight:300;">※ 上記は最低ラインの試算。SNS代行会社に外注すると<strong style="color:var(--red);">月¥100,000〜500,000</strong>が相場。人的ミス・引継ぎロスも発生します。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AIMO side -->
+      <div style="background:var(--s1);border:2px solid var(--cyan);border-radius:20px;overflow:hidden;position:relative;">
+        <div style="position:absolute;top:-1px;right:24px;background:var(--cyan);color:var(--bg);font-size:10px;font-weight:700;letter-spacing:.1em;padding:5px 16px;border-radius:0 0 10px 10px;">AIMO推奨</div>
+        <div style="background:rgba(0,212,255,.05);padding:20px 28px;border-bottom:1px solid rgba(0,212,255,.15);display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:10px;background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round"><path d="M10 2 L12 7 L17 7.5 L13.5 11 L14.5 16 L10 13.5 L5.5 16 L6.5 11 L3 7.5 L8 7 Z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--txt);font-family:'Noto Sans JP',sans-serif;">AIMOに任せる場合</div>
+            <div style="font-size:11px;color:var(--cyan);">経営者は承認するだけ · 24時間365日稼働</div>
+          </div>
+        </div>
+        <div style="padding:24px 28px;">
+          <div style="display:flex;flex-direction:column;gap:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--b1);">
+              <div>
+                <div style="font-size:13px;color:var(--txt);font-weight:400;">SNS投稿・返信・いいね 全自動</div>
+                <div style="font-size:11px;color:var(--green);margin-top:2px;">✓ 24時間365日・無制限稼働</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--cyan);font-family:'Syne',sans-serif;">含む</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--b1);">
+              <div>
+                <div style="font-size:13px;color:var(--txt);font-weight:400;">分析・週次・日次レポート 全自動</div>
+                <div style="font-size:11px;color:var(--green);margin-top:2px;">✓ 毎朝8時に自動配信</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--cyan);font-family:'Syne',sans-serif;">含む</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--b1);">
+              <div>
+                <div style="font-size:13px;color:var(--txt);font-weight:400;">LP改善提案・広告文案 AI生成</div>
+                <div style="font-size:11px;color:var(--green);margin-top:2px;">✓ CVR改善提案を毎日出力</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--cyan);font-family:'Syne',sans-serif;">含む</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:var(--b1);">
+              <div>
+                <div style="font-size:13px;color:var(--txt);font-weight:400;">GMB投稿・口コミAI返信 全自動</div>
+                <div style="font-size:11px;color:var(--green);margin-top:2px;">✓ MEO対策も同時自動化</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--cyan);font-family:'Syne',sans-serif;">含む</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--b1);">
+              <div>
+                <div style="font-size:13px;color:var(--txt);font-weight:400;">戦略立案 CMOエージェント</div>
+                <div style="font-size:11px;color:var(--green);margin-top:2px;">✓ 最適施策を毎週自動立案</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--cyan);font-family:'Syne',sans-serif;">含む</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;">
+              <div>
+                <div style="font-size:13px;color:var(--txt);font-weight:400;">採用・管理・教育コスト</div>
+                <div style="font-size:11px;color:var(--green);margin-top:2px;">✓ 完全ゼロ。設定5分で稼働</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--cyan);font-family:'Syne',sans-serif;">¥0</div>
+            </div>
+          </div>
+          <!-- total -->
+          <div style="background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.2);border-radius:14px;padding:18px 20px;margin-top:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <div style="font-size:13px;color:var(--muted);">月額合計（Proプラン）</div>
+              <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--cyan);">¥6,900</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-size:13px;color:var(--muted);">年間合計</div>
+              <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--cyan);">¥82,800</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;background:rgba(0,229,160,.04);border-radius:10px;padding:12px 14px;">
+            <div style="font-size:12px;color:var(--muted);line-height:1.8;font-weight:300;">✓ 経営者の作業：<strong style="color:var(--green);">LINEで承認するだけ（1日5分）</strong>。残りは全自動。土日祝も24時間稼働継続。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Savings banner -->
+    <div style="margin-top:20px;background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(255,184,0,.06));border:1px solid rgba(0,212,255,.2);border-radius:18px;padding:32px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;" class="rv">
+      <div>
+        <div style="font-size:12px;color:var(--cyan);letter-spacing:.14em;text-transform:uppercase;font-weight:500;margin-bottom:6px;">年間コスト削減額</div>
+        <div style="font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:var(--amber);line-height:1;">¥2,014,800</div>
+        <div style="font-size:14px;color:var(--muted);margin-top:6px;">人件費 ¥2,097,600 − AIMO ¥82,800 = <strong style="color:var(--txt);">年間約200万円の削減</strong></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;min-width:360px;">
+        <div style="text-align:center;padding:18px 12px;background:rgba(255,255,255,.04);border-radius:14px;border:1px solid var(--b1);">
+          <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--cyan);">96%</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">コスト削減率</div>
+        </div>
+        <div style="text-align:center;padding:18px 12px;background:rgba(255,255,255,.04);border-radius:14px;border:1px solid var(--b1);">
+          <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--green);">160h</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">月の作業時間削減</div>
+        </div>
+        <div style="text-align:center;padding:18px 12px;background:rgba(255,255,255,.04);border-radius:14px;border:1px solid var(--b1);">
+          <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--amber);">24h</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">稼働時間（人は8h）</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly breakdown visual -->
+    <div style="margin-top:20px;background:var(--s1);border:1px solid var(--b1);border-radius:18px;padding:32px;" class="rv">
+      <div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:24px;font-family:'Noto Sans JP',sans-serif;">月次コスト内訳 比較</div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <!-- bar items -->
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:12px;color:var(--muted);">SNS運用人件費</span><div style="display:flex;gap:16px;"><span style="font-size:12px;color:var(--red);">人: ¥52,800</span><span style="font-size:12px;color:var(--cyan);">AIMO: 含む</span></div></div>
+          <div style="height:8px;border-radius:100px;background:var(--s2);overflow:hidden;display:flex;gap:2px;">
+            <div style="width:30%;height:100%;background:var(--red);border-radius:100px;"></div>
+            <div style="width:4%;height:100%;background:var(--cyan);border-radius:100px;opacity:.4;"></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:12px;color:var(--muted);">分析・レポート外注</span><div style="display:flex;gap:16px;"><span style="font-size:12px;color:var(--red);">人: ¥32,000</span><span style="font-size:12px;color:var(--cyan);">AIMO: 含む</span></div></div>
+          <div style="height:8px;border-radius:100px;background:var(--s2);overflow:hidden;display:flex;gap:2px;">
+            <div style="width:18%;height:100%;background:var(--red);border-radius:100px;"></div>
+            <div style="width:4%;height:100%;background:var(--cyan);border-radius:100px;opacity:.4;"></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:12px;color:var(--muted);">ライター・LP改善外注</span><div style="display:flex;gap:16px;"><span style="font-size:12px;color:var(--red);">人: ¥15,000</span><span style="font-size:12px;color:var(--cyan);">AIMO: 含む</span></div></div>
+          <div style="height:8px;border-radius:100px;background:var(--s2);overflow:hidden;display:flex;gap:2px;">
+            <div style="width:9%;height:100%;background:var(--red);border-radius:100px;"></div>
+            <div style="width:4%;height:100%;background:var(--cyan);border-radius:100px;opacity:.4;"></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:12px;color:var(--muted);">GMB・口コミ対応</span><div style="display:flex;gap:16px;"><span style="font-size:12px;color:var(--red);">人: ¥20,000</span><span style="font-size:12px;color:var(--cyan);">AIMO: 含む</span></div></div>
+          <div style="height:8px;border-radius:100px;background:var(--s2);overflow:hidden;display:flex;gap:2px;">
+            <div style="width:11%;height:100%;background:var(--red);border-radius:100px;"></div>
+            <div style="width:4%;height:100%;background:var(--cyan);border-radius:100px;opacity:.4;"></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:12px;color:var(--muted);">戦略立案・ミーティング工数</span><div style="display:flex;gap:16px;"><span style="font-size:12px;color:var(--red);">人: ¥40,000</span><span style="font-size:12px;color:var(--cyan);">AIMO: 含む</span></div></div>
+          <div style="height:8px;border-radius:100px;background:var(--s2);overflow:hidden;display:flex;gap:2px;">
+            <div style="width:23%;height:100%;background:var(--red);border-radius:100px;"></div>
+            <div style="width:4%;height:100%;background:var(--cyan);border-radius:100px;opacity:.4;"></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:12px;color:var(--muted);">採用・管理コスト</span><div style="display:flex;gap:16px;"><span style="font-size:12px;color:var(--red);">人: ¥15,000</span><span style="font-size:12px;color:var(--cyan);">AIMO: ¥0</span></div></div>
+          <div style="height:8px;border-radius:100px;background:var(--s2);overflow:hidden;display:flex;gap:2px;">
+            <div style="width:9%;height:100%;background:var(--red);border-radius:100px;"></div>
+            <div style="width:4%;height:100%;background:var(--cyan);border-radius:100px;opacity:.4;"></div>
+          </div>
+        </div>
+        <!-- total bar -->
+        <div style="padding-top:14px;border-top:1px solid var(--b1);">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="font-size:13px;color:var(--txt);font-weight:500;">合計</span><div style="display:flex;gap:16px;"><span style="font-size:14px;font-weight:700;color:var(--red);">人: ¥174,800/月</span><span style="font-size:14px;font-weight:700;color:var(--cyan);">AIMO: ¥6,900/月</span></div></div>
+          <div style="height:12px;border-radius:100px;background:var(--s2);overflow:hidden;position:relative;">
+            <div style="position:absolute;inset:0;width:100%;background:rgba(255,69,96,.15);border-radius:100px;"></div>
+            <div style="position:absolute;inset:0;width:4%;background:var(--cyan);border-radius:100px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;"><span style="font-size:10px;color:var(--red);">■ 人件費</span><span style="font-size:10px;color:var(--cyan);">■ AIMO（わずか4%のコスト）</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ WHY NOW — 今すぐ使う理由 -->
+<section id="why-now" style="background:var(--s1);">
+  <div class="W">
+    <div class="eyebrow rv" style="color:var(--amber);">今すぐ使う理由</div>
+    <h2 class="rv">「あとでいいか」が<br><span style="color:var(--amber);">最大の機会損失</span>になる</h2>
+    <p class="sub rv">1ヶ月先延ばしにするたびに、競合は動き、見込み客は離れ、売上機会が消えていきます。数字で見てください。</p>
+
+    <!-- Opportunity loss cards -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:60px;" class="rv">
+
+      <!-- Card 1: Lost followers -->
+      <div style="background:var(--bg);border:1px solid var(--b1);border-radius:18px;padding:30px 26px;transition:all .3s;" onmouseenter="this.style.borderColor='var(--red)'" onmouseleave="this.style.borderColor='var(--b1)'">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin-bottom:14px;">機会損失 01</div>
+        <div style="font-family:'Syne',sans-serif;font-size:44px;font-weight:800;color:var(--red);line-height:1;margin-bottom:6px;">-1,200</div>
+        <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;">失うフォロワー / 月</div>
+        <div style="font-size:12px;color:#9898b8;line-height:1.85;font-weight:300;border-top:1px solid var(--b1);padding-top:14px;">投稿を毎日続けるアカウントは月平均+1,200フォロワー増加（業種平均）。<br>放置すると<strong style="color:var(--red);">フォロワー増加ゼロ</strong>のまま競合だけが伸びます。<br><br>1年放置 = <strong style="color:var(--red);">-14,400フォロワーの差</strong></div>
+      </div>
+
+      <!-- Card 2: Lost inquiries -->
+      <div style="background:var(--bg);border:1px solid var(--b1);border-radius:18px;padding:30px 26px;transition:all .3s;" onmouseenter="this.style.borderColor='var(--amber)'" onmouseleave="this.style.borderColor='var(--b1)'">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:14px;">機会損失 02</div>
+        <div style="font-family:'Syne',sans-serif;font-size:44px;font-weight:800;color:var(--amber);line-height:1;margin-bottom:6px;">-¥48万</div>
+        <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;">失う売上 / 月（試算）</div>
+        <div style="font-size:12px;color:#9898b8;line-height:1.85;font-weight:300;border-top:1px solid var(--b1);padding-top:14px;">毎日投稿+CVR最適化で月40件の問い合わせを獲得できる業種で、放置すると<strong style="color:var(--amber);">月40件×成約率30%×単価4万円 = ¥48万</strong>が消えます。<br><br>1年放置 = <strong style="color:var(--amber);">¥576万の機会損失</strong></div>
+      </div>
+
+      <!-- Card 3: GMB visibility -->
+      <div style="background:var(--bg);border:1px solid var(--b1);border-radius:18px;padding:30px 26px;transition:all .3s;" onmouseenter="this.style.borderColor='var(--cyan)'" onmouseleave="this.style.borderColor='var(--b1)'">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);margin-bottom:14px;">機会損失 03</div>
+        <div style="font-family:'Syne',sans-serif;font-size:44px;font-weight:800;color:var(--cyan);line-height:1;margin-bottom:6px;">-78%</div>
+        <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;">Googleマップ表示回数の差</div>
+        <div style="font-size:12px;color:#9898b8;line-height:1.85;font-weight:300;border-top:1px solid var(--b1);padding-top:14px;">GMBに週1回投稿し続ける店舗は、放置店舗と比較して<strong style="color:var(--cyan);">Googleマップ表示回数が最大78%多い</strong>というデータがあります。<br><br>1年放置 = <strong style="color:var(--cyan);">競合に検索上位を奪われ続ける</strong></div>
+      </div>
+
+      <!-- Card 4: Response speed -->
+      <div style="background:var(--bg);border:1px solid var(--b1);border-radius:18px;padding:30px 26px;transition:all .3s;" onmouseenter="this.style.borderColor='var(--green)'" onmouseleave="this.style.borderColor='var(--b1)'">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:14px;">機会損失 04</div>
+        <div style="font-family:'Syne',sans-serif;font-size:44px;font-weight:800;color:var(--green);line-height:1;margin-bottom:6px;">-67%</div>
+        <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;">DM返信遅延による成約率低下</div>
+        <div style="font-size:12px;color:#9898b8;line-height:1.85;font-weight:300;border-top:1px solid var(--b1);padding-top:14px;">DM問い合わせへの<strong style="color:var(--green);">返信が1時間以内なら成約率67%</strong>、翌日以降は<strong style="color:var(--red);">17%</strong>まで低下（Meta社データ）。<br><br>AIMOは24時間即時返答。深夜の問い合わせも取りこぼしません。</div>
+      </div>
+
+      <!-- Card 5: Competitor growth -->
+      <div style="background:var(--bg);border:1px solid var(--b1);border-radius:18px;padding:30px 26px;transition:all .3s;" onmouseenter="this.style.borderColor='var(--purple)'" onmouseleave="this.style.borderColor='var(--b1)'">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--purple);margin-bottom:14px;">機会損失 05</div>
+        <div style="font-family:'Syne',sans-serif;font-size:44px;font-weight:800;color:var(--purple);line-height:1;margin-bottom:6px;">+340%</div>
+        <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;">AI活用競合の成長スピード</div>
+        <div style="font-size:12px;color:#9898b8;line-height:1.85;font-weight:300;border-top:1px solid var(--b1);padding-top:14px;">AI宣伝ツールを導入した競合は、未導入競合と比較して<strong style="color:var(--purple);">12ヶ月でフォロワー・問い合わせ数が平均340%増加</strong>。<br><br>差がつき始めると、<strong style="color:var(--purple);">逆転は指数的に難しくなります</strong>。</div>
+      </div>
+
+      <!-- Card 6: Time cost -->
+      <div style="background:var(--bg);border:1px solid var(--b1);border-radius:18px;padding:30px 26px;transition:all .3s;" onmouseenter="this.style.borderColor='var(--amber)'" onmouseleave="this.style.borderColor='var(--b1)'">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:14px;">機会損失 06</div>
+        <div style="font-family:'Syne',sans-serif;font-size:44px;font-weight:800;color:var(--amber);line-height:1;margin-bottom:6px;">960h</div>
+        <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;">1年間の経営者の時間損失</div>
+        <div style="font-size:12px;color:#9898b8;line-height:1.85;font-weight:300;border-top:1px solid var(--b1);padding-top:14px;">SNS・GMB・分析・返信を自分でやると<strong style="color:var(--amber);">月80時間 = 年960時間</strong>が消えます。<br>時給換算5,000円なら<strong style="color:var(--amber);">年間¥480万分の時間</strong>。<br><br>その時間を商品・採用・顧客対応に使えばどうなるか？</div>
+      </div>
+    </div>
+
+    <!-- Urgency timeline -->
+    <div style="margin-top:24px;background:var(--bg);border:1px solid var(--b1);border-radius:18px;padding:32px;" class="rv">
+      <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:24px;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><path d="M8 5 L8 8 L10 10"/></svg>
+        今日始めた場合 vs 3ヶ月後に始めた場合の差
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+        <div style="text-align:center;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:14px;padding:20px 12px;">
+          <div style="font-size:11px;color:var(--cyan);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">1ヶ月後</div>
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--cyan);">+1,200</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">フォロワー増加</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--green);margin-top:8px;">+¥48万</div>
+          <div style="font-size:11px;color:var(--muted);">売上増加（試算）</div>
+        </div>
+        <div style="text-align:center;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:14px;padding:20px 12px;">
+          <div style="font-size:11px;color:var(--cyan);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">3ヶ月後</div>
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--cyan);">+4,800</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">フォロワー増加</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--green);margin-top:8px;">+¥144万</div>
+          <div style="font-size:11px;color:var(--muted);">売上増加（試算）</div>
+        </div>
+        <div style="text-align:center;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:14px;padding:20px 12px;">
+          <div style="font-size:11px;color:var(--cyan);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">6ヶ月後</div>
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--cyan);">+10,200</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">フォロワー増加</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--green);margin-top:8px;">+¥288万</div>
+          <div style="font-size:11px;color:var(--muted);">売上増加（試算）</div>
+        </div>
+        <div style="text-align:center;background:rgba(255,184,0,.07);border:2px solid rgba(255,184,0,.3);border-radius:14px;padding:20px 12px;position:relative;">
+          <div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--amber);color:var(--bg);font-size:9px;font-weight:700;padding:3px 12px;border-radius:100px;white-space:nowrap;">今始めた場合</div>
+          <div style="font-size:11px;color:var(--amber);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">12ヶ月後</div>
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--amber);">+22,400</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">フォロワー増加</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--amber);margin-top:8px;">+¥576万</div>
+          <div style="font-size:11px;color:var(--muted);">売上増加（試算）</div>
+        </div>
+      </div>
+      <div style="margin-top:18px;padding:14px 18px;background:rgba(255,69,96,.05);border:1px solid rgba(255,69,96,.15);border-radius:10px;font-size:12px;color:#9898b8;line-height:1.8;font-weight:300;">
+        ⚠️ <strong style="color:var(--red);">3ヶ月後に始めた場合</strong>、最初の3ヶ月分の成長（フォロワー+4,800・売上+¥144万）は永遠に取り戻せません。時間は巻き戻せない唯一のリソースです。
+      </div>
+    </div>
+
+    <!-- CTA inside section -->
+    <div style="margin-top:24px;text-align:center;" class="rv">
+      <p style="font-size:15px;color:var(--muted);margin-bottom:24px;font-weight:300;">今日スタートする人と、3ヶ月後にスタートする人。<br>1年後には<strong style="color:var(--txt);">取り返せない差</strong>が生まれています。</p>
+      <a href="#pricing" class="btn btn-amber" style="font-size:15px;padding:16px 44px;">今すぐ30トークン無料で試す →</a>
+      <div style="margin-top:14px;font-size:12px;color:var(--muted);">クレジットカード不要 · 最短5分でスタート · いつでも解約可</div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ AFFILIATE — DUAL SYSTEM -->
+<section id="affiliate">
+  <div class="W">
+    <div class="eyebrow rv">アフィリエイト</div>
+    <h2 class="rv">2つのアフィリエイト機能</h2>
+    <p class="sub rv" style="margin-bottom:40px;">AIMOを宣伝して稼ぐ機能と、あなた自身がアフィリエイターを集めて管理する機能。どちらも搭載しています。</p>
+
+    <div class="rv">
+      <!-- TAB SWITCH -->
+      <div class="aff-tabs">
+        <button class="aff-tab active" onclick="switchAff('a',this)">① AIMOを宣伝して稼ぐ</button>
+        <button class="aff-tab" onclick="switchAff('b',this)">② 自社ECのアフィリエイター管理</button>
+      </div>
+
+      <!-- PANEL A -->
+      <div id="aff-a" class="aff-panel active aff-a-grid">
+        <div>
+          <h3 style="margin-bottom:24px;font-size:17px;">AIMOを紹介するだけで<br>継続的な収益が生まれる</h3>
+          <div class="aff-steps">
+            <div class="aff-step"><div class="aff-n">01</div><div><div class="aff-sh">アフィリエイトタグを発行</div><div class="aff-sp">ダッシュボードからワンクリックで固有の紹介タグ・URLを発行。すぐに使えます。</div></div></div>
+            <div class="aff-step"><div class="aff-n">02</div><div><div class="aff-sh">SNS・ブログ・LPで紹介</div><div class="aff-sp">AIMO活用成果をシェアするだけ。リンクをSNSやブログに貼るだけでOK。</div></div></div>
+            <div class="aff-step"><div class="aff-n">03</div><div><div class="aff-sh">成果を自動追跡</div><div class="aff-sp">クリック数・登録数・課金額をダッシュボードでリアルタイム確認。透明性100%。</div></div></div>
+            <div class="aff-step"><div class="aff-n">04</div><div><div class="aff-sh">月末に報酬を受け取る</div><div class="aff-sp">月末締め翌月払いで銀行振込。最低支払額¥3,000〜。ポイント受け取りも可。</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="reward-box">
+            <div class="rw-title">報酬体系</div>
+            <div class="rw-row"><div class="rw-l">無料登録紹介</div><div class="rw-v">¥500<span style="font-size:12px;color:var(--muted);font-weight:300;">/人</span></div></div>
+            <div class="rw-row"><div class="rw-l">有料転換（初月）</div><div class="rw-v">20%</div></div>
+            <div class="rw-row"><div class="rw-l">継続課金報酬</div><div class="rw-v">5%<span style="font-size:12px;color:var(--muted);font-weight:300;">/月</span></div></div>
+            <div class="rw-row"><div class="rw-l">最低支払額</div><div class="rw-v">¥3,000〜</div></div>
+            <a href="#pricing" class="btn btn-amber" style="display:flex;justify-content:center;margin-top:22px;">アフィリエイトを始める →</a>
+          </div>
+          <div class="lp-box">
+            <div style="font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">オプション</div>
+            <div style="font-size:15px;font-weight:700;margin-bottom:6px;color:var(--txt);">アフィリエイト付きLP自動生成</div>
+            <div class="lp-box-price">+¥30,000</div>
+            <div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.8;font-weight:300;">業種・訴求・ターゲットを入力するだけでアフィリエイトタグ埋め込み済みのLPを自動生成。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL B -->
+      <div id="aff-b" class="aff-panel aff-b-grid">
+        <div>
+          <h3 style="margin-bottom:8px;font-size:17px;">自社ECにアフィリエイターを集め<br>販売力を外部に拡張する</h3>
+          <p class="sub" style="margin-bottom:28px;font-size:14px;">自分のECサイトや商品ページのURLを登録するだけで、アフィリエイタープログラムを即開設。AIMOがアフィリエイター募集〜承認〜成果計測〜報酬計算をすべて管理します。</p>
+          <div class="ec-feature-list">
+            <div class="ecf">
+              <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.3"><path d="M12 3 Q19 3 20 12 Q19 21 12 21 Q5 21 4 12 Q5 3 12 3"/><path d="M9 8 L15 8 M9 11 L15 11 M9 14 L12 14"/></svg></div>
+              <div class="ecf-h">アフィリエイター募集ページ 自動生成</div>
+              <div class="ecf-p">商品情報・報酬条件を入力するだけで、応募ページをAIMOが自動作成します。</div>
+            </div>
+            <div class="ecf">
+              <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.3"><circle cx="12" cy="8" r="4"/><path d="M6 20 Q6 15 12 15 Q18 15 18 20"/><path d="M17 5 L21 9 M19 5 L21 7"/></svg></div>
+              <div class="ecf-h">アフィリエイター承認・管理</div>
+              <div class="ecf-p">応募者の審査・承認・停止・タグ発行をダッシュボードで一元管理できます。</div>
+            </div>
+            <div class="ecf">
+              <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.3"><path d="M4 17 L8 11 L12 14 L16 6 L20 9"/><path d="M4 19 L20 19"/></svg></div>
+              <div class="ecf-h">成果・クリック・CV 自動計測</div>
+              <div class="ecf-p">誰が何件成約させたか、クリック数・CVR・売上をリアルタイムで自動追跡します。</div>
+            </div>
+            <div class="ecf">
+              <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.3"><circle cx="12" cy="12" r="8"/><path d="M9 12 L11 14 L15 10"/></svg></div>
+              <div class="ecf-h">報酬自動計算・支払管理</div>
+              <div class="ecf-p">成果に応じた報酬を自動計算。Stripe Connectで月末に自動送金まで対応します。</div>
+            </div>
+            <div class="ecf">
+              <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.3"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M7 8 L17 8 M7 11 L17 11 M7 14 L13 14"/></svg></div>
+              <div class="ecf-h">アフィリエイター向け素材 自動生成</div>
+              <div class="ecf-p">バナー・投稿文・商品説明文をAIMOが自動生成。アフィリエイターがすぐに活動できる状態で提供します。</div>
+            </div>
+            <div class="ecf">
+              <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.3"><path d="M18 8 Q21 8 21 12 Q21 16 18 16 M6 8 Q3 8 3 12 Q3 16 6 16 M6 12 L18 12"/></svg></div>
+              <div class="ecf-h">不正クリック・成果検知</div>
+              <div class="ecf-p">同一IPからの異常クリックや不正な成果報告をAIが自動検知し、アラートを送信します。</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="ec-flow">
+            <div class="ec-flow-title">
+              <div class="ico"><svg width="18" height="18" viewBox="0 0 18 18" stroke="var(--amber)" stroke-width="1.4"><path d="M9 2 L11 6.5 L16 7 L12.5 10 L13.5 15 L9 13 L4.5 15 L5.5 10 L2 7 L7 6.5 Z"/></svg></div>
+              EC アフィリエイト 運用フロー
+            </div>
+            <div class="ecf-step"><div class="ecf-num">1</div><div class="ecf-txt"><strong>商品登録 &amp; 報酬設定</strong><br>ECサイトURL・商品名・報酬率（例：売上の10%）を設定</div></div>
+            <div class="ecf-step"><div class="ecf-num">2</div><div class="ecf-txt"><strong>募集ページを自動生成</strong><br>AIMOがアフィリエイター向け募集ページを自動作成・公開</div></div>
+            <div class="ecf-step"><div class="ecf-num">3</div><div class="ecf-txt"><strong>アフィリエイター申請・審査</strong><br>ダッシュボードで承認/却下。承認後にタグを自動発行</div></div>
+            <div class="ecf-step"><div class="ecf-num">4</div><div class="ecf-txt"><strong>宣伝素材を自動配布</strong><br>バナー・投稿文・LP用コピーをAIMOが自動生成して配布</div></div>
+            <div class="ecf-step"><div class="ecf-num">5</div><div class="ecf-txt"><strong>成果をリアルタイム計測</strong><br>クリック・CV・売上を自動集計。不正検知も自動で実施</div></div>
+            <div class="ecf-step"><div class="ecf-num">6</div><div class="ecf-txt"><strong>月末に自動報酬送金</strong><br>Stripe Connect経由でアフィリエイターへ自動送金</div></div>
+          </div>
+          <div class="plan-note"><strong>Business プラン以上</strong>でECアフィリエイト管理機能が利用可能です。登録できるEC商品数・アフィリエイター数はプランによって異なります。詳細は料金ページをご確認ください。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ PRICING -->
+<section id="pricing">
+  <div class="W">
+    <div class="eyebrow rv">料金</div>
+    <h2 class="rv">シンプルな料金体系</h2>
+    <p class="sub rv">月額サブスクと都度払いポイントを選べます。まずは無料体験から。</p>
+    <div class="price-grid rv">
+      <div class="pc"><div class="pname">Free</div><div class="pamt"><span>¥0</span></div><div class="pdesc">無料体験トークン30pt付き。まずAIMOを体験してください。</div><div class="pfeat">✓ AI生成 3回（5pt/回）</div><div class="pfeat">✓ SNS自動投稿 3回</div><div class="pfeat">✓ 基本ダッシュボード</div><div class="pfeat"><span class="pf-off">—</span> 画像生成</div><div class="pfeat"><span class="pf-off">—</span> LINE承認フロー</div><div class="pfeat"><span class="pf-off">—</span> GMB自動投稿</div><a href="#" class="pbtn pbo">無料で始める</a></div>
+      <div class="pc"><div class="pname">Starter</div><div class="pamt"><span>¥3,900</span><span class="punit">/月</span></div><div class="pdesc">個人・スモールビジネス向け。基本的なSNS自動化を低コストで開始。</div><div class="pfeat">✓ AI投稿生成 月30件</div><div class="pfeat">✓ SNS自動投稿 月30件</div><div class="pfeat">✓ 週次メールレポート</div><div class="pfeat"><span class="pf-off">—</span> 画像生成</div><div class="pfeat"><span class="pf-off">—</span> LINE承認フロー</div><div class="pfeat"><span class="pf-off">—</span> GMB自動投稿</div><a href="#" class="pbtn pbo">Starterを始める</a></div>
+      <div class="pc pop"><div class="pop-tag">最人気プラン</div><div class="pname">Pro</div><div class="pamt"><span>¥6,900</span><span class="punit">/月</span></div><div class="pdesc">中小企業・個人事業主に最適。LINE・画像・GMB・アフィリエイトまで全部入り。</div><div class="pfeat">✓ AI投稿生成 月100件</div><div class="pfeat">✓ AI画像生成 月20枚</div><div class="pfeat">✓ CVR改善提案</div><div class="pfeat">✓ LINE承認フロー</div><div class="pfeat"><strong>✓ GMB自動投稿 月8件</strong></div><div class="pfeat">✓ AIMOアフィリエイト発行</div><a href="#" class="pbtn pbs">Proを始める →</a></div>
+      <div class="pc"><div class="pname">Business</div><div class="pamt"><span>¥14,800</span><span class="punit">/月</span></div><div class="pdesc">成長企業向け。EC アフィリエイト管理・動画生成・競合リサーチ・GMBフル機能。</div><div class="pfeat">✓ AI投稿生成 月200件</div><div class="pfeat">✓ AI動画生成 月3本</div><div class="pfeat">✓ 競合リサーチ自動化</div><div class="pfeat"><strong>✓ GMB自動投稿 月30件</strong></div><div class="pfeat"><strong>✓ EC アフィリエイト管理</strong></div><div class="pfeat">✓ 口コミAI返信 無制限</div><a href="#" class="pbtn pbo">Businessを始める</a></div>
+    </div>
+    <div class="pts-box rv">
+      <div class="pts-title">都度払いポイント</div>
+      <div class="pts-sub">サブスクなしでも使えます。有効期限なし。</div>
+      <div class="pts-grid">
+        <div class="ptc"><div class="ptn">100 pt</div><div class="ptp">¥1,000</div><div class="pts">1pt = ¥10</div></div>
+        <div class="ptc mid"><div class="ptn">550 pt</div><div class="ptp">¥5,000</div><div class="pts">9% OFF</div></div>
+        <div class="ptc"><div class="ptn">1,200 pt</div><div class="ptp">¥10,000</div><div class="pts">17% OFF</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ TESTI -->
+<section id="testi">
+  <div class="W">
+    <div class="eyebrow rv">お客様の声</div>
+    <h2 class="rv">ユーザーの声</h2>
+    <div class="testi-grid rv">
+      <div class="tc"><div class="tc-stars">★★★★★</div><div class="tc-quote">週20時間かけていたSNS運用が、LINEで承認するだけになりました。その時間を商品開発に使えるようになって売上も1.8倍に。</div><div class="tc-author"><div class="tc-av">K</div><div><div class="tc-name">川口 美穂さん</div><div class="tc-role">エステサロン経営 / Pro Plan</div></div></div></div>
+      <div class="tc"><div class="tc-stars">★★★★★</div><div class="tc-quote">CVR改善提案が具体的すぎて驚きました。提案通りに実施したら問い合わせが月12件→31件に。費用対効果が異次元です。</div><div class="tc-author"><div class="tc-av">T</div><div><div class="tc-name">田中 裕一さん</div><div class="tc-role">コンサルタント / Business Plan</div></div></div></div>
+      <div class="tc"><div class="tc-stars">★★★★☆</div><div class="tc-quote">GMB自動投稿を始めてから、Googleマップからの電話が月3件→14件に増えました。MEO対策がこんなに簡単にできるとは思いませんでした。</div><div class="tc-author"><div class="tc-av">S</div><div><div class="tc-name">鈴木 聡志さん</div><div class="tc-role">整骨院オーナー / Pro Plan</div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ FAQ -->
+<section id="faq">
+  <div class="W">
+    <div class="eyebrow rv" style="justify-content:center;">FAQ</div>
+    <h2 class="rv" style="text-align:center;">よくある質問</h2>
+    <div class="faq-wrap">
+      <div class="faq-item"><button class="faq-q" onclick="faqToggle(this)">自動いいね・キーワード返信はアカウント凍結のリスクがありますか？<div class="faq-q-ico"><svg viewBox="0 0 12 12"><path d="M6 2 L6 10 M2 6 L10 6"/></svg></div></button><div class="faq-a">自動いいねは1日の上限回数を設定し、人間の行動パターンに近い間隔でアクションするため、リスクを最小化しています。キーワード返信はDM・コメント対応なので凍結リスクは非常に低く、多くのインフルエンサーやマーケターが活用している手法です。AIの自動返答も自然な日本語で行動するため、スパム扱いされにくい設計です。</div></div>
+      <div class="faq-item"><button class="faq-q" onclick="faqToggle(this)">キーワードトリガーで発行されるURLは何ですか？<div class="faq-q-ico"><svg viewBox="0 0 12 12"><path d="M6 2 L6 10 M2 6 L10 6"/></svg></div></button><div class="faq-a">会員ごとに固有のトークンが付いたURLが自動発行されます。商品LP・プレゼントDL・予約フォームなど、トリガーワードごとに送り先を自由に設定できます。URLへのアクセス・成約はすべて自動追跡され、誰がどこから来たか可視化されます。</div></div><div class="faq-a">Google Business Profile APIを使用。ダッシュボードでGoogleアカウントを認証し、対象の店舗を選択するだけで連携完了です。週1〜2回のペースで投稿文・画像をAIが自動生成しGoogleビジネスプロフィールへ投稿します。複数店舗にも対応しています。</div></div>
+      <div class="faq-item"><button class="faq-q" onclick="faqToggle(this)">自社ECのアフィリエイト管理機能は何プランから使えますか？<div class="faq-q-ico"><svg viewBox="0 0 12 12"><path d="M6 2 L6 10 M2 6 L10 6"/></svg></div></button><div class="faq-a">Businessプラン（¥14,800/月）以上でご利用いただけます。登録できるEC商品数・アフィリエイター数・支払い先数もBusinessプランで拡張されます。AIMOアフィリエイト（AIMOを紹介して稼ぐ機能）はProプラン以上でご利用いただけます。</div></div>
+      <div class="faq-item"><button class="faq-q" onclick="faqToggle(this)">SNSアカウントの接続は難しいですか？<div class="faq-q-ico"><svg viewBox="0 0 12 12"><path d="M6 2 L6 10 M2 6 L10 6"/></svg></div></button><div class="faq-a">登録後のセットアップ画面に沿って、X・Instagram・LINEを認証するだけです。専門知識は不要で、最短5分で完了します。設定サポートはチャットでいつでも対応しています。</div></div>
+      <div class="faq-item"><button class="faq-q" onclick="faqToggle(this)">自動投稿の内容を事前に確認できますか？<div class="faq-q-ico"><svg viewBox="0 0 12 12"><path d="M6 2 L6 10 M2 6 L10 6"/></svg></div></button><div class="faq-a">はい。AIが生成した投稿はすべてダッシュボードでプレビューできます。重要な投稿はLINEで承認依頼が届くので、確認してから公開することも可能です。Lv.1（完全自動）〜Lv.3（必ず承認）の3段階で自動化レベルを調整できます。</div></div>
+      <div class="faq-item"><button class="faq-q" onclick="faqToggle(this)">解約はいつでもできますか？<div class="faq-q-ico"><svg viewBox="0 0 12 12"><path d="M6 2 L6 10 M2 6 L10 6"/></svg></div></button><div class="faq-a">はい、いつでもマイページから解約できます。最低契約期間はなく、解約月の末日まで引き続きご利用いただけます。都度払いポイントの残高は解約後も90日間有効です。</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ▸ FINAL CTA -->
+<section id="cta">
+  <div class="cta-dec"><svg viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid slice"><circle cx="200" cy="250" r="280" stroke="var(--cyan)" stroke-width="1" fill="none"/><circle cx="1000" cy="250" r="320" stroke="var(--amber)" stroke-width="1" fill="none"/><circle cx="600" cy="250" r="180" stroke="var(--cyan)" stroke-width="1" fill="none"/></svg></div>
+  <div class="W">
+    <h2 class="cta-h" style="animation:fadeUp .9s both">今日から、AIに<br><span>売上を作らせよう。</span></h2>
+    <p class="cta-sub">30トークン無料でお試し。クレジットカード不要。最短5分でスタート。</p>
+    <div class="cta-btns">
+      <a href="#" class="btn btn-amber" style="font-size:15px;padding:16px 40px;">今すぐ無料で始める →</a>
+      <a href="#features" class="btn btn-ghost" style="font-size:14px;padding:15px 28px;">機能を詳しく見る</a>
+    </div>
+    <div class="cta-trust"><span>クレカ不要</span><span>最短5分でスタート</span><span>いつでも解約可能</span></div>
+  </div>
+</section>
+
+<!-- ▸ FOOTER -->
+<footer>
+  <div class="W">
+    <div class="footer-grid">
+      <div>
+        <a href="#" class="logo"><div class="logo-box"><svg viewBox="0 0 16 16" fill="none" stroke="#04040a" stroke-width="1.6" stroke-linecap="round"><path d="M2 13 L8 3 L14 13 M5 9.5 L11 9.5"/></svg></div><span class="logo-txt">AIMO</span></a>
+        <p class="footer-brand-desc">売上を作りにいくAI宣伝エージェント。戦略立案からGMB自動投稿まで、宣伝の全サイクルを自動化します。</p>
+      </div>
+      <div class="fc-col"><h4>機能</h4><a href="#features">AI宣伝自動化</a><a href="#gmb">Googleマイビジネス</a><a href="#agents">エージェント</a><a href="#line-sec">LINE承認</a></div>
+      <div class="fc-col"><h4>料金</h4><a href="#pricing">Freeプラン</a><a href="#pricing">Proプラン</a><a href="#pricing">Businessプラン</a><a href="#pricing">ポイント購入</a></div>
+      <div class="fc-col"><h4>サポート</h4><a href="#">ヘルプセンター</a><a href="#">お問い合わせ</a><a href="#">利用規約</a><a href="#">プライバシーポリシー</a></div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 AIMO. All rights reserved.</p>
+      <p>Powered by Claude API · Stripe · Supabase · Vercel</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ▸ PAGE TOP BUTTON -->
+<a href="#" id="pagetop" aria-label="ページトップへ戻る">
+  <svg viewBox="0 0 18 18"><path d="M9 14 L9 4 M4 9 L9 4 L14 9"/></svg>
+</a>
+
+<!-- ▸ CHAT FAB -->
+<button id="chat-fab" aria-label="AIに相談する" onclick="toggleChat()">
+  <svg viewBox="0 0 22 22"><path d="M11 3 Q19 3 20 11 Q19 19 11 19 Q5 19 4 11"/><path d="M4 16 L2 20 L7 18"/><path d="M7 9 L15 9 M7 12 L13 12"/></svg>
+  <div class="chat-badge">AI</div>
+</button>
+
+<!-- ▸ CHAT WINDOW -->
+<div id="chat-win">
+  <div class="cw-header">
+    <div class="cw-av">
+      <svg viewBox="0 0 22 22"><path d="M11 3 Q19 3 20 11 Q19 19 11 19 Q5 19 4 11"/><path d="M4 16 L2 20 L7 18"/><path d="M7 9 L15 9 M7 12 L13 12"/></svg>
+    </div>
+    <div class="cw-info">
+      <div class="cw-name">AIMO サポートAI</div>
+      <div class="cw-status">オンライン中</div>
+    </div>
+    <button class="cw-close" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="cw-msgs" id="chat-msgs">
+    <div class="cwm-ai"><div class="cwm-bbl cwm-bai">こんにちは！AIMOについてのご質問・ご相談はなんでもどうぞ。料金・機能・導入方法など、なんでもお答えします 😊</div></div>
+  </div>
+  <div class="cw-quick" id="chat-quick">
+    <button class="cw-qbtn" onclick="quickSend(this,'料金プランを教えてください')">料金を知りたい</button>
+    <button class="cw-qbtn" onclick="quickSend(this,'自動いいねについて教えてください')">自動いいね</button>
+    <button class="cw-qbtn" onclick="quickSend(this,'キーワード自動返信でURL発行はどう使いますか')">キーワード返信</button>
+    <button class="cw-qbtn" onclick="quickSend(this,'AI自動返答機能を教えてください')">AI自動返答</button>
+    <button class="cw-qbtn" onclick="quickSend(this,'GMB自動投稿の詳細を教えてください')">GMB自動投稿</button>
+    <button class="cw-qbtn" onclick="quickSend(this,'無料で試す方法を教えてください')">無料体験</button>
+  </div>
+  <div class="cw-input-row">
+    <input class="cw-input" id="chat-input" type="text" placeholder="質問を入力してください…" onkeydown="if(event.key==='Enter')sendMsg()">
+    <button class="cw-send" onclick="sendMsg()"><svg viewBox="0 0 15 15"><path d="M13 7.5 L2 2 L5 7.5 L2 13 Z"/></svg></button>
+  </div>
+</div>
+
+<script>
+/* ── NAV ──────────────────────────────── */
+window.addEventListener('scroll',()=>{
+  document.getElementById('nav').classList.toggle('on',window.scrollY>40);
+  document.getElementById('pagetop').classList.toggle('show',window.scrollY>400);
+});
+
+/* ── REVEAL ──────────────────────────── */
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in');});},{threshold:.08});
+document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+document.querySelectorAll('.prob-grid,.feat-grid,.agents-row,.price-grid,.stats-row,.testi-grid').forEach(g=>{
+  [...g.children].forEach((c,i)=>{c.style.transitionDelay=`${i*.06}s`;});
+});
+
+/* ── FAQ ──────────────────────────────── */
+function faqToggle(btn){
+  const item=btn.parentElement;
+  const was=item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
+  if(!was)item.classList.add('open');
+}
+
+/* ── AFFILIATE TABS ───────────────────── */
+function switchAff(panel,btn){
+  document.querySelectorAll('.aff-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.aff-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('aff-'+panel).classList.add('active');
+}
+
+/* ── CHATBOT ──────────────────────────── */
+let chatOpen=false;
+function toggleChat(){
+  chatOpen=!chatOpen;
+  document.getElementById('chat-win').classList.toggle('open',chatOpen);
+  if(chatOpen){document.querySelector('.chat-badge').style.display='none';}
+}
+
+const KB={
+  '料金': 'プランは4つあります。<br>• <b>Free</b>：¥0（30pt付き）<br>• <b>Starter</b>：¥3,900/月<br>• <b>Pro</b>：¥6,900/月（最人気）<br>• <b>Business</b>：¥14,800/月<br><br>都度払いポイントもあります（100pt=¥1,000〜）。詳しくは料金セクションをご確認ください。',
+  'GMB': 'GoogleビジネスプロフィールへAIが自動で「最新情報」「特典」「イベント」「商品紹介」の4種類の投稿を生成・投稿します。口コミ通知やAI返信文案作成も対応。<br><br>• Proプラン：月8件<br>• Businessプラン：月30件',
+  'ECアフィリエイト': '自社ECサイトの商品を登録するだけで、アフィリエイタープログラムを自動開設できます。募集ページ生成・承認管理・成果計測・報酬自動計算・Stripe送金まですべて自動化。<b>Businessプラン以上</b>でご利用いただけます。',
+  '無料': '登録するだけで30トークン無料でお試しいただけます。クレジットカード不要。AI投稿生成3回・SNS投稿3回がすぐに使えます。',
+  'LINE': 'AIMOの提案・警告・レポートがLINEに届きます。「承認」と返信するだけで施策が自動実行されます。Proプラン以上で利用可能です。',
+  'アフィリエイト': 'AIMOには2種類のアフィリエイト機能があります。<br><br>① <b>AIMOを紹介して稼ぐ</b>（Proプラン以上）<br>紹介報酬：¥500/人 + 成約額20% + 継続5%/月<br><br>② <b>自社EC用アフィリエイター管理</b>（Businessプラン以上）<br>自分の商品のアフィリエイタープログラムを自動運営できます。',
+  '解約': 'いつでもマイページから解約できます。最低契約期間はありません。解約月末日まで引き続き利用できます。',
+  'セキュリティ': 'SupabaseのRow Level Securityにより他ユーザーのデータには一切アクセスできません。通信はSSL/TLS暗号化。SNSのAPIキーは暗号化保存しています。',
+  'いいね': '自動いいね・フォロー機能はターゲットキーワード・ハッシュタグで絞り込んだ投稿に自動でいいねします。1日の上限回数を設定でき、凍結リスクを最小化。X・Instagramに対応しています。',
+  'キーワード': 'コメントやDMに「欲しい」「詳細」「プレゼント」などのキーワードが入ると、AIが即座に返信＋会員専用URLを自動発行して送信します。予約フォーム・商品LP・プレゼントDLなどURLの種類もトリガーごとに設定可能です。',
+  '自動返答': 'AIがあなたのブランドトーンを学習し、コメント・DMに自動返答します。完全自動・承認モード・ハイブリッドの3モードから選択可能。クレームや価格交渉は承認モードに自動振り分けもできます。',
+};
+
+function getReply(msg){
+  msg=msg.toLowerCase();
+  if(msg.includes('料金')||msg.includes('価格')||msg.includes('いくら')||msg.includes('プラン'))return KB['料金'];
+  if(msg.includes('gmb')||msg.includes('グーグル')||msg.includes('マイビジネス')||msg.includes('meo'))return KB['GMB'];
+  if(msg.includes('ec')||msg.includes('ecサイト')||msg.includes('アフィリエイター管理')||msg.includes('自社'))return KB['ECアフィリエイト'];
+  if(msg.includes('無料')||msg.includes('試')||msg.includes('体験'))return KB['無料'];
+  if(msg.includes('line')||msg.includes('ライン')||msg.includes('承認'))return KB['LINE'];
+  if(msg.includes('アフィリ'))return KB['アフィリエイト'];
+  if(msg.includes('解約')||msg.includes('やめ'))return KB['解約'];
+  if(msg.includes('安全')||msg.includes('セキュリティ')||msg.includes('個人情報'))return KB['セキュリティ'];
+  if(msg.includes('いいね')||msg.includes('フォロー')||msg.includes('凍結'))return KB['いいね'];
+  if(msg.includes('キーワード')||msg.includes('トリガー')||msg.includes('url発行')||msg.includes('プレゼント')||msg.includes('返信'))return KB['キーワード'];
+  if(msg.includes('自動返答')||msg.includes('ai返答')||msg.includes('dm')||msg.includes('コメント返'))return KB['自動返答'];
+  return 'ご質問ありがとうございます！詳しくは <a href="#faq" style="color:var(--cyan);" onclick="toggleChat()">FAQ</a> をご確認いただくか、<a href="#" style="color:var(--amber);">お問い合わせフォーム</a>からご連絡ください。担当者が丁寧にご説明いたします。';
+}
+
+function addMsg(html,isMe){
+  const msgs=document.getElementById('chat-msgs');
+  const d=document.createElement('div');
+  d.className=isMe?'cwm-me':'cwm-ai';
+  d.innerHTML=`<div class="cwm-bbl ${isMe?'cwm-bme':'cwm-bai'}">${html}</div>`;
+  d.style.animation='slideUp .35s ease both';
+  msgs.appendChild(d);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+function showTyping(){
+  const msgs=document.getElementById('chat-msgs');
+  const d=document.createElement('div');
+  d.className='cwm-ai'; d.id='typing';
+  d.innerHTML='<div class="cwm-bbl cwm-bai"><div class="cw-typing"><span></span><span></span><span></span></div></div>';
+  msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+}
+function hideTyping(){const t=document.getElementById('typing');if(t)t.remove();}
+
+function sendMsg(){
+  const input=document.getElementById('chat-input');
+  const txt=input.value.trim(); if(!txt)return;
+  document.getElementById('chat-quick').style.display='none';
+  addMsg(txt,true); input.value='';
+  showTyping();
+  setTimeout(()=>{hideTyping();addMsg(getReply(txt),false);},900+Math.random()*400);
+}
+
+function quickSend(btn,msg){
+  btn.parentElement.style.display='none';
+  addMsg(msg,true);
+  showTyping();
+  setTimeout(()=>{hideTyping();addMsg(getReply(msg),false);},900+Math.random()*300);
+}
+</script>
+</body>
+</html>
