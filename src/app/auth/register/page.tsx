@@ -1,11 +1,12 @@
 'use client'
+import { Suspense } from 'react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/browser'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -19,7 +20,6 @@ export default function RegisterPage() {
     e.preventDefault()
     if (password.length < 8) { toast.error('パスワードは8文字以上で設定してください'); return }
     setLoading(true)
-
     const { data, error } = await supabase.auth.signUp({
       email, password,
       options: {
@@ -27,11 +27,9 @@ export default function RegisterPage() {
         emailRedirectTo: `${location.origin}/api/auth/callback`
       }
     })
-
     if (error) {
       toast.error(error.message)
     } else if (data.user) {
-      // Update profile with referral code if present
       if (referralCode) {
         await supabase.from('profiles').update({ referred_by: referralCode }).eq('id', data.user.id)
       }
@@ -98,5 +96,13 @@ export default function RegisterPage() {
         すでにアカウントをお持ちの方は <Link href="/auth/login" className="text-[#00d4ff] hover:underline">ログイン</Link>
       </p>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="bg-[#0a0a14] border border-[#1a1a2e] rounded-2xl p-8 text-center text-[#6b6b8a]">読み込み中...</div>}>
+      <RegisterForm />
+    </Suspense>
   )
 }
