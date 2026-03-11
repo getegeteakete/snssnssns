@@ -55,3 +55,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
+
+export async function GET(request: NextRequest) {
+  // Redirect to billing profile
+  return NextResponse.json({ message: 'Use /api/billing/profile for profile data' }, { status: 200 })
+}
