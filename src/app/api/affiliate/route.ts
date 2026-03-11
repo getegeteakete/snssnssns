@@ -20,8 +20,9 @@ export async function GET(request: NextRequest) {
     supabase.from('ec_programs').select('*, ec_affiliators(count)').eq('owner_id', user.id),
   ])
 
-  const totalEarned = (conversions || []).reduce((s, c) => s + c.reward, 0)
-  const pendingReward = (conversions || []).filter(c => c.status === 'pending').reduce((s, c) => s + c.reward, 0)
+  const conversionList = (conversions || []) as any[]
+  const totalEarned = conversionList.reduce((s: number, c: any) => s + (c.reward || 0), 0)
+  const pendingReward = conversionList.filter((c: any) => c.status === 'pending').reduce((s: number, c: any) => s + (c.reward || 0), 0)
 
   return NextResponse.json({
     affiliate_code: profile?.affiliate_code,
