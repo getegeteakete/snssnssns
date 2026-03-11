@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/browser'
 import type { AiProposal } from '@/types/database'
 import toast from 'react-hot-toast'
 
