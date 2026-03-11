@@ -110,14 +110,17 @@ h3{font-size:18px;font-weight:700;font-family:'Noto Sans JP',sans-serif;}
 ══════════════════════════════════════ */
 nav{
   position:fixed;top:0;inset-inline:0;z-index:999;
-  height:60px;display:flex;align-items:center;
-  transition:background .4s,box-shadow .4s;
+  height:68px;display:flex;align-items:center;
+  background:rgba(4,4,10,.95);
+  backdrop-filter:blur(24px) saturate(1.6);
+  -webkit-backdrop-filter:blur(24px) saturate(1.6);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  transition:background .3s,box-shadow .3s;
 }
 nav.on{
-  background:rgba(4,4,10,.88);
-  backdrop-filter:blur(20px) saturate(1.4);
-  -webkit-backdrop-filter:blur(20px) saturate(1.4);
-  box-shadow:0 1px 0 var(--b1);
+  background:rgba(4,4,10,.98);
+  box-shadow:0 2px 24px rgba(0,0,0,.4);
+  border-bottom:1px solid rgba(0,212,255,.12);
 }
 .nav-i{display:flex;align-items:center;justify-content:space-between;}
 .logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
@@ -126,19 +129,30 @@ nav.on{
   display:flex;align-items:center;justify-content:center;
 }
 .logo-box svg{width:16px;height:16px;}
-.logo-txt{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--txt);letter-spacing:-.04em;}
-.navlinks{display:flex;gap:28px;}
-.navlinks a{font-size:12px;font-weight:400;color:var(--muted);text-decoration:none;transition:color .2s;letter-spacing:.04em;}
-.navlinks a:hover{color:var(--txt);}
-.nav-cta{font-size:12px;font-weight:500;letter-spacing:.04em;background:var(--cyan);color:var(--bg);padding:8px 20px;border-radius:100px;text-decoration:none;transition:all .2s;}
-.nav-cta:hover{background:var(--amber);color:var(--bg);}
+.logo-txt{font-family:'Syne',sans-serif;font-size:22px;font-weight:900;color:#e8e8f4;letter-spacing:-.06em;}
+.logo-label{font-size:9px;font-weight:700;letter-spacing:.18em;color:var(--cyan);margin-left:2px;opacity:.8;}
+.navlinks{display:flex;gap:8px;}
+.navlinks a{
+  font-size:13px;font-weight:500;color:rgba(232,232,244,.7);
+  text-decoration:none;transition:all .2s;letter-spacing:.02em;
+  padding:6px 14px;border-radius:8px;
+}
+.navlinks a:hover{color:#e8e8f4;background:rgba(255,255,255,.07);}
+.nav-cta{
+  font-size:13px;font-weight:700;letter-spacing:.02em;
+  background:linear-gradient(135deg,#ffb800,#ff8c00);
+  color:#04040a;padding:9px 22px;border-radius:100px;
+  text-decoration:none;transition:all .2s;
+  box-shadow:0 0 20px rgba(255,184,0,.3);
+}
+.nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 24px rgba(255,184,0,.5);}
 
 /* ══════════════════════════════════════
    HERO
 ══════════════════════════════════════ */
 #hero{
   min-height:100svh;display:flex;align-items:center;
-  padding-top:60px;background:var(--bg);position:relative;overflow:hidden;
+  padding-top:68px;background:var(--bg);position:relative;overflow:hidden;
 }
 /* grid bg */
 .hero-bg{
@@ -676,7 +690,10 @@ footer{background:var(--s1);border-top:1px solid var(--b1);padding:60px 0 32px;}
       <a href="#pricing">料金</a>
       <a href="#faq">FAQ</a>
     </div>
-    <a href="#pricing" class="nav-cta">無料で試す</a>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <a href="/auth/login" style="font-size:13px;font-weight:500;color:rgba(232,232,244,.6);text-decoration:none;padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,.1);transition:all .2s;" onmouseover="this.style.color='#e8e8f4';this.style.borderColor='rgba(255,255,255,.25)'" onmouseout="this.style.color='rgba(232,232,244,.6)';this.style.borderColor='rgba(255,255,255,.1)'">ログイン</a>
+      <a href="/auth/register" class="nav-cta">無料で試す →</a>
+    </div>
   </div>
 </nav>
 
