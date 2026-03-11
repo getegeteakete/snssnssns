@@ -2,39 +2,49 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request: { headers: request.headers } })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name) { return request.cookies.get(name)?.value },
-        set(name, value, options) {
-          request.cookies.set({ name, value, ...options })
-          response = NextResponse.next({ request: { headers: request.headers } })
-          response.cookies.set({ name, value, ...options })
-        },
-        remove(name, options) {
-          request.cookies.set({ name, value: '', ...options })
-          response = NextResponse.next({ request: { headers: request.headers } })
-          response.cookies.set({ name, value: '', ...options })
-        },
-      },
-    }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const { pathname } = request.nextUrl
 
-  // Protect dashboard routes
-  if (pathname.startsWith('/dashboard') && !user) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
+  // If env vars not set yet, allow through (shows config error page instead of crash)
+  if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder')) {
+    if (pathname.startsWith('/dashboard')) {
+      return NextResponse.redirect(new URL('/auth/login', request.url))
+    }
+    return NextResponse.next()
   }
 
-  // Redirect logged-in users away from auth pages
-  if (pathname.startsWith('/auth') && user) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  let response = NextResponse.next({ request: { headers: request.headers } })
+
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    cookies: {
+      get(name) { return request.cookies.get(name)?.value },
+      set(name, value, options) {
+        request.cookies.set({ name, value, ...options })
+        response = NextResponse.next({ request: { headers: request.headers } })
+        response.cookies.set({ name, value, ...options })
+      },
+      remove(name, options) {
+        request.cookies.set({ name, value: '', ...options })
+        response = NextResponse.next({ request: { headers: request.headers } })
+        response.cookies.set({ name, value: '', ...options })
+      },
+    },
+  })
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (pathname.startsWith('/dashboard') && !user) {
+      return NextResponse.redirect(new URL('/auth/login', request.url))
+    }
+    if (pathname.startsWith('/auth') && user) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+  } catch {
+    if (pathname.startsWith('/dashboard')) {
+      return NextResponse.redirect(new URL('/auth/login', request.url))
+    }
   }
 
   return response
