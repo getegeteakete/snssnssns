@@ -2,15 +2,12 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  const { pathname } = request.nextUrl
 
-  // If env vars not set yet, allow through (shows config error page instead of crash)
+  // env vars未設定 or /auth/* → そのまま通す（ログインページを表示）
   if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder')) {
-    if (pathname.startsWith('/dashboard')) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
-    }
     return NextResponse.next()
   }
 
@@ -34,14 +31,16 @@ export async function middleware(request: NextRequest) {
 
   try {
     const { data: { user } } = await supabase.auth.getUser()
-
+    // ダッシュボードに未ログインでアクセス → ログインへ
     if (pathname.startsWith('/dashboard') && !user) {
       return NextResponse.redirect(new URL('/auth/login', request.url))
     }
+    // ログイン済みで /auth/* にアクセス → ダッシュボードへ
     if (pathname.startsWith('/auth') && user) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   } catch {
+    // エラー時は /dashboard のみ保護、/auth/* はそのまま通す
     if (pathname.startsWith('/dashboard')) {
       return NextResponse.redirect(new URL('/auth/login', request.url))
     }
