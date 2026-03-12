@@ -267,9 +267,6 @@ function BillingInner() {
   )
 }
 
-export default function BillingPage() {
-  return <Suspense fallback={<div className="p-6 text-[#6b6b8a]">読み込み中...</div>}><BillingInner /></Suspense>
-}
 
 const PLANS = [
   { id: 'starter', name: 'Starter', price: 3900, color: 'cyan', features: ['SNS投稿 月30件', 'AI生成 月30回', '基本分析', 'GMB月4件'] },
