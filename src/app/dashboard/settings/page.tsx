@@ -1,15 +1,36 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 
-export default function SettingsPage() {
+const ERROR_MESSAGES: Record<string, string> = {
+  twitter_not_configured: 'X(Twitter)APIキー未設定。Vercelに TWITTER_CLIENT_ID を設定してください。',
+  instagram_not_configured: 'InstagramのAPIキー未設定。Vercelに META_APP_ID を設定してください。',
+  facebook_not_configured: 'FacebookのAPIキー未設定。Vercelに META_APP_ID を設定してください。',
+  gmb_not_configured: 'Google Business ProfileのAPIキー未設定。Vercelに GOOGLE_CLIENT_ID を設定してください。',
+  oauth_denied: '連携がキャンセルされました。',
+  oauth_failed: '連携に失敗しました。もう一度お試しください。',
+}
+const PLATFORM_LABELS: Record<string, string> = {
+  twitter: 'X(Twitter)', instagram: 'Instagram', facebook: 'Facebook', gmb: 'Google Business Profile',
+}
+
+function SettingsInner() {
   const [profile, setProfile] = useState<any>(null)
   const [snsAccounts, setSnsAccounts] = useState<any[]>([])
   const [tab, setTab] = useState<'profile' | 'sns' | 'line' | 'ai'>('profile')
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ full_name: '', business_type: '', brand_tone: '' })
+  const searchParams = useSearchParams()
 
-  useEffect(() => { fetchSettings() }, [])
+  useEffect(() => {
+    fetchSettings()
+    const error = searchParams.get('error')
+    const success = searchParams.get('success')
+    const platform = searchParams.get('platform')
+    if (error) toast.error(ERROR_MESSAGES[error] || 'エラーが発生しました', { duration: 6000 })
+    if (success === 'connected' && platform) toast.success(`${PLATFORM_LABELS[platform] || platform}の連携が完了しました！`)
+  }, [])
 
   async function fetchSettings() {
     const [r1, r2] = await Promise.all([
@@ -193,4 +214,8 @@ export default function SettingsPage() {
       )}
     </div>
   )
+}
+-e 
+export default function SettingsPage() {
+  return <Suspense fallback={<div className="p-6 text-[#6b6b8a]">読み込み中...</div>}><SettingsInner /></Suspense>
 }
