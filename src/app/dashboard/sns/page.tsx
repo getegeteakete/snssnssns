@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
 
-type Tab = 'posts' | 'likes' | 'triggers' | 'ai_reply'
+type Tab = 'posts' | 'note' | 'likes' | 'triggers' | 'ai_reply'
 const PLATFORM_LABELS: Record<string, string> = { twitter: '𝕏 X', instagram: 'Instagram', facebook: 'Facebook' }
 
 export default function SnsPage() {
@@ -21,7 +21,18 @@ export default function SnsPage() {
   const [triggerForm, setTriggerForm] = useState({ platform: 'instagram', trigger_type: 'comment', keywords: '', reply_template: '', url_type: 'product_lp', destination_url: '' })
   const [jobForm, setJobForm] = useState({ platform: 'instagram', job_type: 'like', target_type: 'hashtag', target_value: '', daily_limit: 100 })
 
-  useEffect(() => { fetchTriggers(); fetchJobs(); fetchReplyQueue() }, [])
+  // Note状態
+  const [noteForm, setNoteForm] = useState({ topic: '', businessType: '', tone: 'friendly', articleType: 'knowledge', targetLength: 'medium' })
+  const [noteGenerated, setNoteGenerated] = useState<any>(null)
+  const [noteGenerating, setNoteGenerating] = useState(false)
+  const [notePosting, setNotePosting] = useState(false)
+  const [noteCredentials, setNoteCredentials] = useState({ email: '', password: '' })
+  const [notePosts, setNotePosts] = useState<any[]>([])
+  const [showNoteCredentials, setShowNoteCredentials] = useState(false)
+
+  useEffect(() => { fetchTriggers(); fetchJobs(); fetchReplyQueue(); fetchNotePosts() }, [])
+
+  async function fetchNotePosts() { const r = await fetch('/api/note'); if (r.ok) setNotePosts(await r.json()) }
 
   async function fetchTriggers() { const r = await fetch('/api/sns/triggers'); if (r.ok) setTriggers(await r.json()) }
   async function fetchJobs() { const r = await fetch('/api/sns/jobs'); if (r.ok) setJobs(await r.json()) }
@@ -99,8 +110,36 @@ export default function SnsPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  async function generateNote() {
+    if (!noteForm.topic.trim()) { toast.error('テーマを入力してください'); return }
+    setNoteGenerating(true); setNoteGenerated(null)
+    const r = await fetch('/api/note', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'generate', params: noteForm }) })
+    const data = await r.json()
+    if (r.ok) { setNoteGenerated(data.result); toast.success('Note記事を生成しました (5pt使用)') }
+    else toast.error(data.error || '生成に失敗しました')
+    setNoteGenerating(false)
+  }
+
+  async function postNote(status: 'draft' | 'published') {
+    if (!noteGenerated) { toast.error('先に記事を生成してください'); return }
+    if (!noteCredentials.email || !noteCredentials.password) { setShowNoteCredentials(true); toast.error('NoteのID/PASSを入力してください'); return }
+    setNotePosting(true)
+    const r = await fetch('/api/note', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'post', noteEmail: noteCredentials.email, notePassword: noteCredentials.password,
+        title: noteGenerated.title, body: noteGenerated.body, hashtags: noteGenerated.hashtags, status }) })
+    const data = await r.json()
+    if (r.ok) {
+      toast.success(status === 'published' ? 'Noteに公開しました！' : '下書きに保存しました')
+      if (data.noteUrl) window.open(data.noteUrl, '_blank')
+      fetchNotePosts()
+    } else toast.error(data.error || '投稿に失敗しました')
+    setNotePosting(false)
+  }
+
   const tabs = [
     { id: 'posts' as Tab, label: '投稿生成', icon: '✦' },
+    { id: 'note' as Tab, label: 'Note記事', icon: '📝' },
     { id: 'likes' as Tab, label: '自動いいね・フォロー', icon: '♥' },
     { id: 'triggers' as Tab, label: 'キーワード返信', icon: '⚡' },
     { id: 'ai_reply' as Tab, label: 'AI自動返答', icon: '🤖' },
@@ -322,6 +361,175 @@ export default function SnsPage() {
                 <button className="flex-1 btn-primary py-3 text-sm font-bold justify-center">📤 今すぐ投稿</button>
                 <button className="flex-1 btn-ghost py-3 text-sm justify-center">🕒 予約投稿</button>
                 <button onClick={() => { setGeneratedPost(null); generatePost() }} className="px-4 btn-ghost py-3 text-[#6b6b8a]">🔄</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Note記事 ── */}
+      {tab === 'note' && (
+        <div className="space-y-6">
+          {/* Note認証情報 */}
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📝</span>
+                <h2 className="font-display text-sm font-bold">NoteアカウントのID/PASS</h2>
+              </div>
+              <button onClick={() => setShowNoteCredentials(!showNoteCredentials)}
+                className="text-xs text-[#6b6b8a] hover:text-[#e8e8f4] transition-colors">
+                {showNoteCredentials ? '▲ 閉じる' : '▼ 設定する'}
+              </button>
+            </div>
+            {showNoteCredentials ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-[#6b6b8a] mb-1">メールアドレス</label>
+                    <input type="email" value={noteCredentials.email} onChange={e => setNoteCredentials(p => ({...p, email: e.target.value}))}
+                      placeholder="note登録メールアドレス" className="input-field text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-[#6b6b8a] mb-1">パスワード</label>
+                    <input type="password" value={noteCredentials.password} onChange={e => setNoteCredentials(p => ({...p, password: e.target.value}))}
+                      placeholder="noteパスワード" className="input-field text-sm" />
+                  </div>
+                </div>
+                <p className="text-xs text-[#6b6b8a]">⚠ パスワードはセッション内のみ保持されます。投稿のたびに認証します。</p>
+              </div>
+            ) : (
+              <p className="text-xs text-[#6b6b8a]">
+                {noteCredentials.email ? `✓ ${noteCredentials.email} で設定済み` : '未設定 — 記事投稿時に必要です'}
+              </p>
+            )}
+          </div>
+
+          {/* 記事生成フォーム */}
+          <div className="card space-y-4">
+            <h2 className="font-display text-sm font-bold">Note記事を生成する</h2>
+            <div>
+              <label className="block text-xs text-[#6b6b8a] mb-1">記事テーマ・トピック <span className="text-[#ff4560]">*</span></label>
+              <textarea value={noteForm.topic} onChange={e => setNoteForm(p => ({...p, topic: e.target.value}))}
+                placeholder="例：補助金申請で失敗しない3つのポイント、AIを使った業務効率化の実例..."
+                rows={3} className="input-field text-sm resize-none" />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-xs text-[#6b6b8a] mb-1">業種</label>
+                <input value={noteForm.businessType} onChange={e => setNoteForm(p => ({...p, businessType: e.target.value}))}
+                  placeholder="例：士業、美容、IT" className="input-field text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs text-[#6b6b8a] mb-1">記事の種類</label>
+                <select value={noteForm.articleType} onChange={e => setNoteForm(p => ({...p, articleType: e.target.value}))} className="input-field text-sm">
+                  <option value="knowledge">ノウハウ共有</option>
+                  <option value="story">ストーリー・体験談</option>
+                  <option value="tips">Tipsリスト</option>
+                  <option value="case_study">事例紹介</option>
+                  <option value="opinion">考察・オピニオン</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-[#6b6b8a] mb-1">文字数</label>
+                <select value={noteForm.targetLength} onChange={e => setNoteForm(p => ({...p, targetLength: e.target.value}))} className="input-field text-sm">
+                  <option value="short">短め（800〜1200字）</option>
+                  <option value="medium">標準（1500〜2500字）</option>
+                  <option value="long">長め（3000〜5000字）</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-[#6b6b8a] mb-1">トーン</label>
+                <select value={noteForm.tone} onChange={e => setNoteForm(p => ({...p, tone: e.target.value}))} className="input-field text-sm">
+                  <option value="friendly">フレンドリー</option>
+                  <option value="professional">プロフェッショナル</option>
+                  <option value="casual">カジュアル</option>
+                </select>
+              </div>
+            </div>
+            <button onClick={generateNote} disabled={noteGenerating}
+              className="btn-primary py-3 px-8 disabled:opacity-50 flex items-center gap-2">
+              {noteGenerating ? (
+                <><span className="animate-spin">◌</span> 記事を生成中...</>
+              ) : '📝 Note記事を生成する (5pt)'}
+            </button>
+          </div>
+
+          {/* 生成結果 */}
+          {noteGenerated && (
+            <div className="card space-y-5">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-sm font-bold text-[#00e5a0]">✓ 記事が生成されました</h2>
+                <div className="flex gap-2">
+                  <button onClick={() => postNote('draft')} disabled={notePosting}
+                    className="px-4 py-2 rounded-xl text-xs font-bold border border-[#1a1a2e] text-[#6b6b8a] hover:border-[#252540] hover:text-[#e8e8f4] transition-all disabled:opacity-50">
+                    {notePosting ? '...' : '📁 下書き保存'}
+                  </button>
+                  <button onClick={() => postNote('published')} disabled={notePosting}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-[rgba(0,229,160,0.12)] border border-[rgba(0,229,160,0.3)] text-[#00e5a0] hover:bg-[rgba(0,229,160,0.2)] transition-all disabled:opacity-50">
+                    {notePosting ? '投稿中...' : '🚀 Noteに公開'}
+                  </button>
+                </div>
+              </div>
+
+              {/* タイトル */}
+              <div>
+                <div className="text-xs text-[#6b6b8a] mb-1">タイトル</div>
+                <div className="text-base font-bold text-[#e8e8f4] bg-[#04040a] rounded-xl px-4 py-3 border border-[#1a1a2e]">
+                  {noteGenerated.title}
+                </div>
+              </div>
+
+              {/* 概要 */}
+              {noteGenerated.summary && (
+                <div>
+                  <div className="text-xs text-[#6b6b8a] mb-1">概要</div>
+                  <div className="text-xs text-[#9898b8] bg-[#04040a] rounded-xl px-4 py-3 border border-[#1a1a2e]">
+                    {noteGenerated.summary}
+                  </div>
+                </div>
+              )}
+
+              {/* 本文 */}
+              <div>
+                <div className="text-xs text-[#6b6b8a] mb-1">本文プレビュー</div>
+                <div className="text-xs text-[#9898b8] bg-[#04040a] rounded-xl px-4 py-4 border border-[#1a1a2e] whitespace-pre-wrap max-h-96 overflow-y-auto leading-relaxed">
+                  {noteGenerated.body}
+                </div>
+              </div>
+
+              {/* ハッシュタグ */}
+              {noteGenerated.hashtags?.length > 0 && (
+                <div>
+                  <div className="text-xs text-[#6b6b8a] mb-2">タグ</div>
+                  <div className="flex flex-wrap gap-2">
+                    {noteGenerated.hashtags.map((tag: string, i: number) => (
+                      <span key={i} className="px-3 py-1 rounded-full text-xs bg-[rgba(139,92,246,0.12)] border border-[rgba(139,92,246,0.2)] text-[#8b5cf6]">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 投稿履歴 */}
+          {notePosts.length > 0 && (
+            <div className="card">
+              <h2 className="font-display text-sm font-bold mb-4">Note投稿履歴</h2>
+              <div className="space-y-2">
+                {notePosts.map((p: any) => (
+                  <div key={p.id} className="flex items-center justify-between py-2.5 border-b border-[#1a1a2e] last:border-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-[#e8e8f4] truncate">{p.content?.split('\n')[0] || '無題'}</div>
+                      <div className="text-xs text-[#6b6b8a] mt-0.5">{new Date(p.created_at).toLocaleDateString('ja-JP')}</div>
+                    </div>
+                    <span className={`ml-3 text-xs px-2 py-0.5 rounded-full ${p.status === 'published' ? 'text-[#00e5a0] bg-[rgba(0,229,160,0.1)]' : 'text-[#6b6b8a] bg-[#1a1a2e]'}`}>
+                      {p.status === 'published' ? '公開済み' : '下書き'}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
