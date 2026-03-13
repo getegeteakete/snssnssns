@@ -3,6 +3,8 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 
+export const dynamic = 'force-dynamic'
+
 const ERROR_MESSAGES: Record<string, string> = {
   twitter_not_configured: 'X(Twitter)APIキー未設定。Vercelに TWITTER_CLIENT_ID を設定してください。',
   instagram_not_configured: 'InstagramのAPIキー未設定。Vercelに META_APP_ID を設定してください。',
