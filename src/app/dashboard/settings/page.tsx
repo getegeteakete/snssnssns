@@ -20,9 +20,13 @@ const PLATFORM_LABELS: Record<string, string> = {
 function SettingsInner() {
   const [profile, setProfile] = useState<any>(null)
   const [snsAccounts, setSnsAccounts] = useState<any[]>([])
-  const [tab, setTab] = useState<'profile' | 'sns' | 'line' | 'ai'>('profile')
+  const [tab, setTab] = useState<'profile' | 'sns' | 'note' | 'line' | 'ai'>('profile')
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ full_name: '', business_type: '', brand_tone: '' })
+  const [noteEmail, setNoteEmail] = useState('')
+  const [notePassword, setNotePassword] = useState('')
+  const [noteSaving, setNoteSaving] = useState(false)
+  const [noteShowPass, setNoteShowPass] = useState(false)
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -39,7 +43,7 @@ function SettingsInner() {
       fetch('/api/settings/profile'),
       fetch('/api/settings/sns-accounts'),
     ])
-    if (r1.ok) { const d = await r1.json(); setProfile(d); setForm({ full_name: d.full_name || '', business_type: d.business_type || '', brand_tone: d.brand_tone || '' }) }
+    if (r1.ok) { const d = await r1.json(); setProfile(d); setForm({ full_name: d.full_name || '', business_type: d.business_type || '', brand_tone: d.brand_tone || '' }); setNoteEmail(d.note_email || '') }
     if (r2.ok) setSnsAccounts(await r2.json())
   }
 
@@ -53,6 +57,16 @@ function SettingsInner() {
 
   function connectOAuth(platform: string) {
     window.location.href = `/api/auth/${platform}`
+  }
+
+  async function saveNoteCredentials() {
+    if (!noteEmail.trim()) { toast.error('メールアドレスを入力してください'); return }
+    setNoteSaving(true)
+    const r = await fetch('/api/note', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'save_credentials', noteEmail, notePassword }) })
+    if (r.ok) { toast.success('Note認証情報を保存しました'); setNotePassword('') }
+    else { const d = await r.json(); toast.error(d.error || '保存に失敗しました') }
+    setNoteSaving(false)
   }
 
   const PLATFORM_INFO: Record<string, { label: string; color: string; icon: string }> = {
@@ -70,7 +84,7 @@ function SettingsInner() {
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        {[{ id: 'profile', label: 'プロフィール' }, { id: 'sns', label: 'SNS連携' }, { id: 'line', label: 'LINE連携' }, { id: 'ai', label: 'AI設定' }].map(t => (
+        {[{ id: 'profile', label: 'プロフィール' }, { id: 'sns', label: 'SNS連携' }, { id: 'note', label: '📝 Note連携' }, { id: 'line', label: 'LINE連携' }, { id: 'ai', label: 'AI設定' }].map(t => (
           <button key={t.id} onClick={() => setTab(t.id as any)}
             className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${tab === t.id ? 'bg-[rgba(0,212,255,0.12)] text-[#00d4ff] border-[rgba(0,212,255,0.3)]' : 'text-[#6b6b8a] border-[#1a1a2e]'}`}>
             {t.label}
@@ -127,6 +141,60 @@ function SettingsInner() {
                 </div>
               )
             })}
+          </div>
+        </div>
+      )}
+
+
+      {/* Note tab */}
+      {tab === 'note' && (
+        <div className="card max-w-lg space-y-5">
+          <div>
+            <h2 className="font-display text-base font-bold">Note（ノート）連携</h2>
+            <p className="text-xs text-[#6b6b8a] mt-1">NoteのID/PASSを保存するとSNS自動化ページから直接記事を投稿できます</p>
+          </div>
+
+          <div className="bg-[rgba(0,212,255,0.04)] border border-[rgba(0,212,255,0.15)] rounded-xl p-4 space-y-1 text-xs text-[#9898b8]">
+            <div className="text-[#00d4ff] font-bold mb-2">ℹ Note連携について</div>
+            <div>• NoteはID/PASSで連携できます（公式対応）</div>
+            <div>• 記事生成・下書き保存・公開投稿が可能</div>
+            <div>• パスワードは暗号化してDBに保存されます</div>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-[#6b6b8a] mb-1.5">Noteメールアドレス</label>
+              <input type="email" value={noteEmail} onChange={e => setNoteEmail(e.target.value)}
+                placeholder="note.com に登録したメールアドレス"
+                className="input-field" />
+            </div>
+            <div>
+              <label className="block text-xs text-[#6b6b8a] mb-1.5">Noteパスワード</label>
+              <div className="relative">
+                <input type={noteShowPass ? 'text' : 'password'} value={notePassword} onChange={e => setNotePassword(e.target.value)}
+                  placeholder={noteEmail ? '変更する場合のみ入力' : 'パスワードを入力'}
+                  className="input-field pr-16" />
+                <button type="button" onClick={() => setNoteShowPass(!noteShowPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#6b6b8a] hover:text-[#e8e8f4]">
+                  {noteShowPass ? '隠す' : '表示'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {noteEmail && !notePassword && (
+            <div className="flex items-center gap-2 text-xs text-[#00e5a0]">
+              <span>✓</span><span>{noteEmail} で設定済み</span>
+            </div>
+          )}
+
+          <button onClick={saveNoteCredentials} disabled={noteSaving || (!noteEmail)}
+            className="btn-primary py-3 px-8 disabled:opacity-50">
+            {noteSaving ? '保存中...' : 'Note認証情報を保存'}
+          </button>
+
+          <div className="text-xs text-[#6b6b8a] pt-2 border-t border-[#1a1a2e]">
+            保存後はSNS自動化 → 「📝 Note記事」タブから記事を生成・投稿できます
           </div>
         </div>
       )}
